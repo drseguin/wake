@@ -1,10 +1,11 @@
 # Keycloak SSO Administration Guide
 
-This guide explains how to manage users and authentication for the Translate application using Keycloak Single Sign-On (SSO).
+This guide explains how to set up and manage Keycloak Single Sign-On (SSO) for applications built from the Base App template.
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Initial Setup](#initial-setup)
 - [Accessing Keycloak Admin Console](#accessing-keycloak-admin-console)
 - [User Management](#user-management)
   - [Creating Users](#creating-users)
@@ -17,6 +18,7 @@ This guide explains how to manage users and authentication for the Translate app
   - [Removing Roles](#removing-roles)
 - [Authentication Flow](#authentication-flow)
 - [Configuration Reference](#configuration-reference)
+- [Customizing for Your App](#customizing-for-your-app)
 - [Troubleshooting](#troubleshooting)
 - [Command Line Administration](#command-line-administration)
 
@@ -24,7 +26,7 @@ This guide explains how to manage users and authentication for the Translate app
 
 ## Overview
 
-The Translate application uses Keycloak for Single Sign-On (SSO) authentication. Keycloak provides:
+Applications built from the Base App template use Keycloak for Single Sign-On (SSO) authentication. Keycloak provides:
 
 - **Centralized User Management** - Create, manage, and delete users in one place
 - **Role-Based Access Control** - Assign roles to control access to admin features
@@ -38,16 +40,83 @@ User Browser
      │
      ▼
 ┌─────────────────┐     ┌─────────────────┐
-│  Translate App  │────▶│    Keycloak     │
-│  (Frontend)     │◀────│  (Auth Server)  │
+│    Your App     │────▶│    Keycloak     │
+│   (Frontend)    │◀────│  (Auth Server)  │
 └─────────────────┘     └─────────────────┘
      │                         │
      ▼                         ▼
 ┌─────────────────┐     ┌─────────────────┐
-│  Translate API  │     │   PostgreSQL    │
-│  (Backend)      │     │  (User Store)   │
+│    Your API     │     │   PostgreSQL    │
+│   (Backend)     │     │  (User Store)   │
 └─────────────────┘     └─────────────────┘
 ```
+
+---
+
+## Initial Setup
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- The application started via `./start.sh`
+
+### First-Time Setup Steps
+
+1. **Start the application:**
+   ```bash
+   ./start.sh
+   ```
+   This automatically:
+   - Starts the Keycloak server with PostgreSQL
+   - Imports the pre-configured realm from `keycloak/realm-export.json`
+   - Creates the `base-app` realm with client, roles, and a test user
+
+2. **Accept the self-signed certificate:**
+   - Open `https://localhost:8443` in your browser
+   - Accept the certificate warning (required for auth flow)
+   - Also accept the certificate on `https://localhost`
+
+3. **Access Keycloak Admin Console:**
+   - Navigate to `https://localhost:8443/admin`
+   - Log in with username: `admin`, password: `admin`
+   - Select the **base-app** realm from the dropdown in the top-left corner
+
+4. **Enable SSO in the application:**
+   - Set `SINGLE_USER_MODE=false` in your `.env` file (or `docker-compose.yml`)
+   - Restart: `./start.sh`
+
+### Pre-Configured Defaults
+
+The realm import automatically creates:
+
+| Item | Value |
+|------|-------|
+| Realm | `base-app` |
+| Client ID | `base-app-client` |
+| Client Secret | `base-app-secret` |
+| User Role | `base-app-user` (assigned to all new users by default) |
+| Admin Role | `base-app-admin` |
+| Test User | Username: `admin`, Password: `admin` (has admin role) |
+
+### Changing Default Passwords (Production)
+
+**Change these immediately for production deployments:**
+
+1. **Keycloak Admin Password:**
+   - Update `KC_BOOTSTRAP_ADMIN_PASSWORD` in `docker-compose.yml`
+   - Or change it via Keycloak Admin Console → Users → admin → Credentials
+
+2. **Client Secret:**
+   - Keycloak Admin → Clients → `base-app-client` → Credentials → Regenerate secret
+   - Update the new secret in `backend/keycloak.json` (`client_secret` field)
+
+3. **Database Passwords:**
+   - Update `POSTGRES_PASSWORD` in `docker-compose.yml` (keycloak-db service)
+   - Update `KC_DB_PASSWORD` in `docker-compose.yml` (keycloak service) to match
+
+4. **Test User Password:**
+   - Keycloak Admin → Users → admin → Credentials → Reset password
+   - Or delete the test user and create new users with secure passwords
 
 ---
 
@@ -70,9 +139,9 @@ https://localhost:8443/admin
 1. Navigate to `https://localhost:8443/admin`
 2. Accept the self-signed certificate warning
 3. Enter username: `admin`, password: `admin`
-4. Select the **translate** realm from the dropdown in the top-left corner
+4. Select the **base-app** realm from the dropdown in the top-left corner
 
-> **Important:** Always ensure you are in the `translate` realm (not `master`) when managing application users.
+> **Important:** Always ensure you are in the `base-app` realm (not `master`) when managing application users.
 
 ---
 
@@ -80,11 +149,11 @@ https://localhost:8443/admin
 
 ### Creating Users
 
-1. In Keycloak Admin Console, select **translate** realm
+1. In Keycloak Admin Console, select **base-app** realm
 2. Navigate to **Users** in the left sidebar
 3. Click **Create new user** (or **Add user**)
 4. Fill in the required fields:
-   - **Username** (required) - Used for login and job isolation
+   - **Username** (required) - Used for login
    - **Email** (optional) - For password recovery
    - **First name** (optional) - Display name
    - **Last name** (optional) - Display name
@@ -108,8 +177,6 @@ After creating the user:
 3. Click on the user to open their details
 4. Click **Delete** in the top-right (or use the action menu)
 5. Confirm deletion
-
-> **Warning:** Deleting a user does not delete their translation jobs. Jobs are retained based on the cleanup policy.
 
 ### Resetting Passwords
 
@@ -136,23 +203,21 @@ After creating the user:
 
 ### Available Roles
 
-The Translate application uses two realm roles:
+The Base App uses two realm roles:
 
 | Role | Description |
 |------|-------------|
-| `translate-user` | Default role for all users. Allows translation and job submission. |
-| `translate-admin` | Administrator role. Grants access to admin settings, user job management, and system controls. |
+| `base-app-user` | Default role for all users. Grants standard application access. |
+| `base-app-admin` | Administrator role. Grants access to admin features and user management. |
 
 ### Admin Capabilities
 
-Users with `translate-admin` role can:
+Users with `base-app-admin` role can:
 
 - Access the **Administration** panel in Settings
-- View and manage ALL users' jobs (not just their own)
-- Force restart worker pool
-- Flush Redis cache
-- Delete jobs in bulk by status
-- View system metrics and worker status
+- View and manage all users' data (not just their own)
+- Access system administration features
+- View system metrics and status
 
 ### Assigning Admin Role
 
@@ -162,7 +227,7 @@ Users with `translate-admin` role can:
 2. Go to **Role mapping** tab
 3. Click **Assign role**
 4. **Important:** Change filter from "Filter by clients" to **"Filter by realm roles"**
-5. Check the box next to **translate-admin**
+5. Check the box next to **base-app-admin**
 6. Click **Assign**
 
 #### Via Command Line
@@ -175,16 +240,16 @@ TOKEN=$(curl -s -k -X POST "https://localhost:8443/realms/master/protocol/openid
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 # Get user ID (replace USERNAME with actual username)
-USER_ID=$(curl -s -k "https://localhost:8443/admin/realms/translate/users?username=USERNAME" \
+USER_ID=$(curl -s -k "https://localhost:8443/admin/realms/base-app/users?username=USERNAME" \
   -H "Authorization: Bearer $TOKEN" \
   | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['id'])")
 
 # Get role ID
-ROLE=$(curl -s -k "https://localhost:8443/admin/realms/translate/roles/translate-admin" \
+ROLE=$(curl -s -k "https://localhost:8443/admin/realms/base-app/roles/base-app-admin" \
   -H "Authorization: Bearer $TOKEN")
 
 # Assign role to user
-curl -s -k -X POST "https://localhost:8443/admin/realms/translate/users/$USER_ID/role-mappings/realm" \
+curl -s -k -X POST "https://localhost:8443/admin/realms/base-app/users/$USER_ID/role-mappings/realm" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "[$ROLE]"
@@ -218,7 +283,7 @@ echo "Admin role assigned successfully"
                 │
                 ▼
 4. Browser redirects to Keycloak login page
-   https://localhost:8443/realms/translate/protocol/openid-connect/auth
+   https://localhost:8443/realms/base-app/protocol/openid-connect/auth
                 │
                 ▼
 5. User enters credentials in Keycloak
@@ -253,7 +318,7 @@ echo "Admin role assigned successfully"
                 │
                 ▼
 4. Browser redirects to Keycloak logout
-   https://localhost:8443/realms/translate/protocol/openid-connect/logout
+   https://localhost:8443/realms/base-app/protocol/openid-connect/logout
                 │
                 ▼
 5. Keycloak ends SSO session
@@ -265,10 +330,10 @@ echo "Admin role assigned successfully"
 
 ### Session Management
 
-- **Session Storage:** Redis (key: `auth_token:{uuid}`)
+- **Session Storage:** Redis (key: `session:{uuid}`)
 - **Cookie:** `auth_token` (HTTPOnly, Secure, SameSite=None)
-- **Session Duration:** Until browser closes or explicit logout
-- **Token Refresh:** Not implemented (re-login required if Keycloak token expires)
+- **Session Duration:** 8 hours
+- **Token Refresh:** Not implemented (re-login required if session expires)
 
 ---
 
@@ -276,30 +341,28 @@ echo "Admin role assigned successfully"
 
 ### Backend Configuration
 
-In `backend/config.json`:
+All Keycloak settings are centralized in `backend/keycloak.json`:
 
 ```json
 {
-  "keycloak": {
-    "server_url": "http://keycloak:8080",
-    "public_url": "https://localhost:8443",
-    "app_url": "https://localhost",
-    "realm": "translate",
-    "client_id": "translate-app",
-    "client_secret": "translate-app-secret",
-    "admin_role": "translate-admin"
-  }
+  "server_url": "http://keycloak:8080",
+  "public_url": "https://localhost:8443",
+  "app_url": "https://localhost",
+  "realm": "base-app",
+  "client_id": "base-app-client",
+  "client_secret": "base-app-secret",
+  "admin_role": "base-app-admin"
 }
 ```
 
 | Setting | Description |
 |---------|-------------|
-| `server_url` | Internal Keycloak URL (Docker network) |
-| `public_url` | Public Keycloak URL (browser access) |
+| `server_url` | Internal Keycloak URL (Docker network, used for server-to-server calls) |
+| `public_url` | Public Keycloak URL (browser access, used in authorization URLs) |
 | `app_url` | Application URL for OAuth callbacks |
 | `realm` | Keycloak realm name |
 | `client_id` | OAuth client ID |
-| `client_secret` | OAuth client secret |
+| `client_secret` | OAuth client secret (change in production) |
 | `admin_role` | Role name that grants admin access |
 
 ### Docker Compose
@@ -323,6 +386,35 @@ keycloak:
 
 ---
 
+## Customizing for Your App
+
+When building a new app from the Base App template, update these Keycloak-related files:
+
+### 1. Realm Export (`keycloak/realm-export.json`)
+
+- Change `"realm": "base-app"` to your app name (e.g., `"my-app"`)
+- Change `"clientId": "base-app-client"` to match (e.g., `"my-app-client"`)
+- Change `"secret"` to a new secure value
+- Update role names (`base-app-user` → `my-app-user`, `base-app-admin` → `my-app-admin`)
+- Update redirect URIs if your app URL changes
+- Change or remove the test user
+
+### 2. Backend Config (`backend/keycloak.json`)
+
+- Update `realm`, `client_id`, `client_secret`, and `admin_role` to match the realm export
+- Update `public_url` and `app_url` for your deployment
+
+### 3. Frontend Role Check
+
+- In `UserMenu.jsx`, update `'base-app-admin'` to your admin role name
+- Search the codebase for `base-app-admin` and update all references
+
+### 4. Run `./stop.sh` then `./start.sh`
+
+The realm is only imported on first boot. You must wipe volumes to re-import.
+
+---
+
 ## Troubleshooting
 
 ### "Invalid redirect URI" Error
@@ -330,7 +422,7 @@ keycloak:
 **Cause:** The redirect URI doesn't match Keycloak's allowed URIs.
 
 **Solution:**
-1. Go to Keycloak Admin → **Clients** → **translate-app**
+1. Go to Keycloak Admin → **Clients** → **base-app-client**
 2. Check **Valid redirect URIs** includes:
    - `https://localhost/api/v1/auth/callback`
    - `https://localhost/*`
@@ -358,25 +450,44 @@ keycloak:
 2. Check browser console for cookie issues
 3. Ensure accessing via nginx (`https://localhost`), not directly to backend
 
+### Certificate Not Accepted
+
+**Cause:** Self-signed certificate not trusted by browser.
+
+**Solutions:**
+1. Navigate to `https://localhost` and accept the certificate
+2. Navigate to `https://localhost:8443` and accept the certificate
+3. Both certificates must be accepted for the auth flow to work
+
 ### Keycloak Not Starting
 
 **Check logs:**
 ```bash
-docker logs translate-keycloak
+docker logs base-app-keycloak
 ```
 
 **Common issues:**
-- Database connection failed → Check `keycloak-db` is healthy
+- Database connection failed → Check `keycloak-db` is healthy: `docker compose ps`
 - Port conflict → Ensure port 8443 is available
 - Invalid realm config → Check `keycloak/realm-export.json` syntax
 
 ### User Can't See Admin Features
 
-**Cause:** User doesn't have `translate-admin` role.
+**Cause:** User doesn't have `base-app-admin` role.
 
 **Solution:**
-1. Assign `translate-admin` role (see [Assigning Admin Role](#assigning-admin-role))
+1. Assign `base-app-admin` role (see [Assigning Admin Role](#assigning-admin-role))
 2. User must **log out and log back in** for role changes to take effect
+
+### Realm Not Imported
+
+**Cause:** Keycloak only imports the realm on first boot with an empty database.
+
+**Solution:**
+```bash
+./stop.sh    # Removes volumes (wipes Keycloak DB)
+./start.sh   # Rebuilds and re-imports realm
+```
 
 ---
 
@@ -390,29 +501,14 @@ TOKEN=$(curl -s -k -X POST "https://localhost:8443/realms/master/protocol/openid
   -d "username=admin&password=admin&grant_type=password&client_id=admin-cli" \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
-curl -s -k "https://localhost:8443/admin/realms/translate/users" \
-  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
-```
-
-### List All Roles
-
-```bash
-curl -s -k "https://localhost:8443/admin/realms/translate/roles" \
-  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
-```
-
-### Get User's Roles
-
-```bash
-# Replace USER_ID with actual user ID
-curl -s -k "https://localhost:8443/admin/realms/translate/users/USER_ID/role-mappings/realm" \
+curl -s -k "https://localhost:8443/admin/realms/base-app/users" \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 ```
 
 ### Create User via CLI
 
 ```bash
-curl -s -k -X POST "https://localhost:8443/admin/realms/translate/users" \
+curl -s -k -X POST "https://localhost:8443/admin/realms/base-app/users" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -441,26 +537,13 @@ curl -s -k "https://localhost:8443/health" | python3 -m json.tool
 
 ### For Production
 
-1. **Change default passwords:**
-   - Keycloak admin password
-   - Database passwords
-   - Client secrets
-
-2. **Use proper SSL certificates** (not self-signed)
-
-3. **Restrict network access:**
-   - Keycloak admin console should not be publicly accessible
-   - Use firewall rules to limit access
-
+1. **Change all default passwords** — Keycloak admin, database, client secret, test user
+2. **Use proper SSL certificates** — Replace self-signed certs with real certificates
+3. **Restrict network access** — Keycloak admin console should not be publicly accessible
 4. **Enable audit logging** in Keycloak for compliance
-
-5. **Set password policies:**
-   - Go to **Realm Settings** → **Authentication** → **Policies**
-   - Configure minimum length, complexity, etc.
-
-6. **Configure session timeouts:**
-   - Go to **Realm Settings** → **Sessions**
-   - Set appropriate SSO Session Idle and Max times
+5. **Set password policies** — Realm Settings → Authentication → Policies
+6. **Configure session timeouts** — Realm Settings → Sessions
+7. **Rotate the client secret** periodically and update `backend/keycloak.json`
 
 ---
 
@@ -471,16 +554,19 @@ curl -s -k "https://localhost:8443/health" | python3 -m json.tool
 | Access Keycloak Admin | https://localhost:8443/admin |
 | Create User | Users → Create new user |
 | Set Password | Users → [user] → Credentials → Set password |
-| Assign Admin Role | Users → [user] → Role mapping → Assign role → translate-admin |
+| Assign Admin Role | Users → [user] → Role mapping → Assign role → base-app-admin |
 | View Sessions | Sessions (left menu) |
 | View Login Events | Events → Login events |
-| Client Settings | Clients → translate-app |
+| Client Settings | Clients → base-app-client |
 | Realm Settings | Realm Settings |
+| App Keycloak Config | `backend/keycloak.json` |
+| Realm Import File | `keycloak/realm-export.json` |
 
 ---
 
 ## Related Documentation
 
-- [CLAUDE.md](../CLAUDE.md) - Main project documentation
-- [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md) - Development guidelines
-- [MULTI_DOCUMENT_ARCHITECTURE.md](./MULTI_DOCUMENT_ARCHITECTURE.md) - Job queue system
+- [README.md](../README.md) - Project overview and quick start
+- [CLAUDE.md](../CLAUDE.md) - Project context for AI-assisted development
+- [STYLE_GUIDE.md](./STYLE_GUIDE.md) - Complete design specification
+- [APP_DEVELOPMENT_RULES.md](./APP_DEVELOPMENT_RULES.md) - Coding standards

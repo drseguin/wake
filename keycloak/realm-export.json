@@ -1,0 +1,87 @@
+{
+  "id": "base-app",
+  "realm": "base-app",
+  "enabled": true,
+  "displayName": "Base App",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "base-app-user",
+        "description": "Default role for all application users",
+        "composite": false
+      },
+      {
+        "name": "base-app-admin",
+        "description": "Administrator role with full access to admin features",
+        "composite": false
+      }
+    ]
+  },
+  "defaultRoles": ["base-app-user"],
+  "clients": [
+    {
+      "clientId": "base-app-client",
+      "name": "Base App Client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "base-app-secret",
+      "redirectUris": [
+        "https://localhost/api/v1/auth/callback",
+        "https://localhost/*"
+      ],
+      "webOrigins": [
+        "https://localhost"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "post.logout.redirect.uris": "https://localhost/*",
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@localhost",
+      "firstName": "Admin",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["base-app-user", "base-app-admin"]
+    }
+  ]
+}

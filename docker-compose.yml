@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./nginx
+    container_name: base-app-nginx
+    ports:
+      - "443:443"
+      - "8443:8443"
+    depends_on:
+      - frontend
+      - backend
+      - keycloak
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: base-app-frontend
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: base-app-backend
+    environment:
+      - SINGLE_USER_MODE=${SINGLE_USER_MODE:-true}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: base-app-keycloak
+    command: start-dev --import-realm
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_HOSTNAME=https://localhost:8443
+      - KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true
+      - KC_HTTP_ENABLED=true
+      - KC_PROXY_HEADERS=xforwarded
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: base-app-keycloak-db
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: base-app-redis
+    networks:
+      - base-app-net
+    restart: unless-stopped
+
+volumes:
+  keycloak-db-data:
+
+networks:
+  base-app-net:
+    driver: bridge
