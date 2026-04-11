@@ -61,7 +61,8 @@ echo ""
 echo "  Note: Accept the self-signed certificate"
 echo "  warning in your browser."
 echo ""
-echo "  To stop: ./stop.sh"
+echo "  To stop:      ./stop.sh"
+echo "  To view logs: ./start.sh logs"
 echo "========================================="
 
 # Follow logs if requested
