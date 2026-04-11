@@ -184,6 +184,7 @@ def create_app():
             f'&state={state}'
             f'&code_challenge={code_challenge}'
             f'&code_challenge_method=S256'
+            f'&prompt=login'
         )
 
         logger.debug('Generated Keycloak authorization URL')
