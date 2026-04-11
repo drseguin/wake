@@ -1,7 +1,7 @@
 """
 Unified Logger for Base App Backend
 
-@fileoverview Provides a configured logger instance with the BA: prefix
+@fileoverview Provides a configured logger instance with the DSC: prefix
 for all backend logging. All modules must use this logger instead of
 print() or direct logging calls.
 
@@ -11,7 +11,7 @@ print() or direct logging calls.
 @license Professional - All Rights Reserved
 
 Key Features:
-- Consistent BA: prefix on all log messages
+- Consistent DSC: prefix on all log messages
 - Structured log format with timestamp, level, and message
 - Console output with color-coded levels
 - Configurable log level via environment variable
@@ -33,7 +33,7 @@ import os
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG').upper()
 
 formatter = logging.Formatter(
-    fmt='BA: [%(levelname)s] %(asctime)s - %(message)s',
+    fmt='DSC: [%(levelname)s] %(asctime)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 

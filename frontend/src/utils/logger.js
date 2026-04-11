@@ -1,7 +1,7 @@
 /**
  * Unified Logger for Base App Frontend
  *
- * @fileoverview Provides a logger utility with the BA: prefix for all
+ * @fileoverview Provides a logger utility with the DSC: prefix for all
  * frontend logging. All modules must use this logger instead of raw
  * console.log, console.warn, etc.
  *
@@ -11,7 +11,7 @@
  * @license Professional - All Rights Reserved
  *
  * Key Features:
- * - Consistent BA: prefix on all log messages
+ * - Consistent DSC: prefix on all log messages
  * - Four log levels: debug, info, warn, error
  * - Production-safe (debug suppressed in production)
  *
@@ -30,20 +30,20 @@ const isDev = import.meta.env.DEV;
 const logger = {
   debug: (...args) => {
     if (isDev) {
-      console.debug('BA: [DEBUG]', ...args);
+      console.debug('DSC: [DEBUG]', ...args);
     }
   },
 
   info: (...args) => {
-    console.info('BA: [INFO]', ...args);
+    console.info('DSC: [INFO]', ...args);
   },
 
   warn: (...args) => {
-    console.warn('BA: [WARN]', ...args);
+    console.warn('DSC: [WARN]', ...args);
   },
 
   error: (...args) => {
-    console.error('BA: [ERROR]', ...args);
+    console.error('DSC: [ERROR]', ...args);
   }
 };
 
