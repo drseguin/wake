@@ -63,3 +63,11 @@ echo "  warning in your browser."
 echo ""
 echo "  To stop: ./stop.sh"
 echo "========================================="
+
+# Follow logs if requested
+if [ "$1" = "logs" ]; then
+  echo ""
+  echo "Following logs (Ctrl+C to stop)..."
+  echo ""
+  docker compose logs -f
+fi
