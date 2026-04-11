@@ -64,7 +64,7 @@ def create_app():
     redis_client = redis.from_url(Config.REDIS_URL, decode_responses=True)
     kc = Config.KEYCLOAK
 
-    logger.info('Starting Base App backend')
+    logger.info(f'Starting {Config.APP_NAME} backend')
     logger.info(f'SINGLE_USER_MODE: {Config.SINGLE_USER_MODE}')
 
     # ------------------------------------------------------------------ #
@@ -99,6 +99,7 @@ def create_app():
         from utils.version_manager import get_version_info
         version_info = get_version_info()
         return jsonify({
+            'app_name': Config.APP_NAME,
             'single_user_mode': Config.SINGLE_USER_MODE,
             'version': version_info['version'],
             'build_timestamp': version_info['build_timestamp']

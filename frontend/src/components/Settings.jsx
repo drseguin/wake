@@ -36,9 +36,10 @@ import { useTheme } from '../contexts/ThemeContext';
  * @param {Object} props
  * @param {Function} props.onClose - Close modal callback
  * @param {Function} props.showToast - Toast notification callback
+ * @param {string} props.appName - Application name from config
  * @returns {JSX.Element}
  */
-function Settings({ onClose, showToast }) {
+function Settings({ onClose, showToast, appName }) {
   const { isDark, toggleTheme, accentColor, setAccentColor, ACCENT_PRESETS } = useTheme();
   const [activeTab, setActiveTab] = useState('preferences');
   const [activeSubTab, setActiveSubTab] = useState('appearance');
@@ -96,7 +97,7 @@ function Settings({ onClose, showToast }) {
                   <input
                     type="text"
                     className="form-input"
-                    value="Base App"
+                    value={appName}
                     readOnly
                     placeholder="Enter application name"
                   />

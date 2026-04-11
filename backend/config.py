@@ -50,6 +50,7 @@ def _load_keycloak_config():
 class Config:
     """Application configuration loaded from environment and config files."""
 
+    APP_NAME = os.environ.get('APP_NAME', 'Base App')
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
     KEYCLOAK = _load_keycloak_config()

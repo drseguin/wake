@@ -61,6 +61,7 @@ export const useDialog = () => useContext(DialogContext);
 
 function App() {
   const [user, setUser] = useState(null);
+  const [appName, setAppName] = useState('Base App');
   const [singleUserMode, setSingleUserMode] = useState(true);
   const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,6 +125,12 @@ function App() {
       logger.info('Initializing application');
       try {
         const config = await api.getConfig();
+        if (config.app_name) {
+          setAppName(config.app_name);
+          document.title = config.app_name;
+          const meta = document.querySelector('meta[name="description"]');
+          if (meta) meta.setAttribute('content', config.app_name);
+        }
         setSingleUserMode(config.single_user_mode);
         if (config.version) setVersion(config.version);
         logger.info(`SINGLE_USER_MODE: ${config.single_user_mode}`);
@@ -234,13 +241,14 @@ function App() {
           className="main-content"
           style={{ marginLeft: panelOpen ? (parseInt(localStorage.getItem('leftPanelWidth')) || 280) : 0 }}
         >
-          {activeNav === 'dashboard' && <Dashboard showToast={showToast} />}
+          {activeNav === 'dashboard' && <Dashboard showToast={showToast} appName={appName} />}
         </main>
 
         {settingsOpen && (
           <Settings
             onClose={() => setSettingsOpen(false)}
             showToast={showToast}
+            appName={appName}
           />
         )}
 

@@ -25,13 +25,14 @@ import React from 'react';
  *
  * @param {Object} props
  * @param {Function} props.showToast - Toast notification callback
+ * @param {string} props.appName - Application name from config
  * @returns {JSX.Element}
  */
-function Dashboard({ showToast }) {
+function Dashboard({ showToast, appName }) {
   return (
     <div className="dashboard">
       <div className="dashboard-welcome">
-        <h1>Welcome to Base App</h1>
+        <h1>Welcome to {appName}</h1>
         <p>
           Replace this page with your application content.
         </p>

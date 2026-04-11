@@ -1,11 +1,18 @@
 #!/bin/bash
-# Base App - Stop Script
+# Stop Script
 # Stops and removes all containers and volumes.
 
 set -e
 
+# Load app name from .env or fall back to default
+APP_NAME="${APP_NAME:-Base App}"
+if [ -f .env ]; then
+  _name=$(grep -E '^APP_NAME=' .env | cut -d'=' -f2-)
+  [ -n "$_name" ] && APP_NAME="$_name"
+fi
+
 echo "========================================="
-echo "  Base App - Stopping..."
+echo "  ${APP_NAME} - Stopping..."
 echo "========================================="
 echo ""
 

@@ -1,11 +1,18 @@
 #!/bin/bash
-# Base App - Start Script
+# Start Script
 # Stops existing containers, rebuilds, and starts the application.
 
 set -e
 
+# Load app name from .env or fall back to default
+APP_NAME="${APP_NAME:-Base App}"
+if [ -f .env ]; then
+  _name=$(grep -E '^APP_NAME=' .env | cut -d'=' -f2-)
+  [ -n "$_name" ] && APP_NAME="$_name"
+fi
+
 echo "========================================="
-echo "  Base App - Starting..."
+echo "  ${APP_NAME} - Starting..."
 echo "========================================="
 echo ""
 
@@ -43,7 +50,7 @@ sleep 3
 
 echo ""
 echo "========================================="
-echo "  Base App is running!"
+echo "  ${APP_NAME} is running!"
 echo "========================================="
 echo ""
 echo "  Application:    https://localhost"

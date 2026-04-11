@@ -24,6 +24,7 @@ services:
     build: ./backend
     container_name: base-app-backend
     environment:
+      - APP_NAME=${APP_NAME:-Base App}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
       - REDIS_URL=redis://redis:6379/0
     depends_on:
