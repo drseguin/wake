@@ -13,10 +13,10 @@
  * Key Features:
  * - Hamburger toggle with animated three-line to X transition
  * - Centered logo with gradient accent text
- * - Header actions: MetricsDropdown, ThemeToggle, UserMenu
+ * - Header actions: ThemeToggle, UserMenu
  *
  * Dependencies:
- * - ThemeToggle, UserMenu, MetricsDropdown components
+ * - ThemeToggle, UserMenu components
  *
  * Security Considerations:
  * - User data displayed from authenticated session only
@@ -28,7 +28,6 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
-import MetricsDropdown from './MetricsDropdown';
 
 /**
  * App header with navigation toggle, logo, and action buttons.
@@ -73,7 +72,6 @@ function Header({ panelOpen, onTogglePanel, user, version, onLogout, onOpenSetti
       </div>
 
       <div className="header-actions">
-        <MetricsDropdown />
         <ThemeToggle />
         <UserMenu
           user={user}

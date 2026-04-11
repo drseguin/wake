@@ -127,16 +127,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes metrics-slide-in {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse-healthy {
-  0%   { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.5); }
-  70%  { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-}
 
 @keyframes toastSlideIn {
   from { opacity: 0; transform: translate(-50%, -20px); }
@@ -569,173 +559,6 @@ body {
   width: 20px; height: 20px;
   transition: transform 0.3s ease;
 }
-
-/* ===================================================================
-   METRICS DROPDOWN
-   =================================================================== */
-
-.metrics-wrapper { position: relative; }
-
-.metrics-dropdown-button {
-  background: none;
-  border: 2px solid var(--border-color);
-  border-radius: 10px;
-  width: 44px; height: 44px;
-  padding: 0;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s ease;
-  position: relative;
-  color: var(--text-primary);
-}
-.metrics-dropdown-button:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-.metrics-dropdown-button.active {
-  border-color: var(--accent-color);
-  background: var(--accent-color);
-  color: white;
-}
-.metrics-icon { width: 22px; height: 22px; transition: transform 0.2s ease; }
-.metrics-dropdown-button:hover .metrics-icon { transform: scale(1.1); }
-
-.metrics-status-dot {
-  position: absolute;
-  top: -3px; right: -3px;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--background-card);
-  background: var(--text-secondary);
-}
-.metrics-status-dot--healthy {
-  background: #4CAF50;
-  animation: pulse-healthy 2s infinite;
-}
-
-.metrics-dropdown-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 380px;
-  background: var(--background-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  overflow: hidden;
-  animation: metrics-slide-in 0.2s ease;
-}
-
-.metrics-dropdown-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
-.metrics-dropdown-title {
-  font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;
-}
-
-.metrics-status-badge {
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 10px;
-  background: var(--bg-tertiary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-.status-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--text-secondary);
-}
-.status-dot--healthy { background: #4CAF50; }
-.status-text { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-
-.metrics-dropdown-content {
-  padding: 20px;
-  max-height: 480px;
-  overflow-y: auto;
-}
-
-.metrics-uptime {
-  text-align: center;
-  padding: 20px;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover));
-  border-radius: 12px;
-  color: white;
-}
-.metrics-uptime-value {
-  font-size: 36px; font-weight: 800;
-  line-height: 1; letter-spacing: -1px;
-}
-.metrics-uptime-label {
-  font-size: 13px; font-weight: 500;
-  opacity: 0.9; margin-top: 6px;
-  text-transform: uppercase; letter-spacing: 1px;
-}
-
-.metrics-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.metrics-stat-card {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 14px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}
-.metrics-stat-card:hover {
-  border-color: var(--accent-color);
-  transform: translateY(-1px);
-}
-.metrics-stat-icon {
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.metrics-stat-icon svg { width: 20px; height: 20px; }
-.metrics-stat-icon--requests     { background: rgba(33,150,243,0.15); color: #2196F3; }
-.metrics-stat-icon--jobs         { background: rgba(76,175,80,0.15);  color: #4CAF50; }
-.metrics-stat-icon--queue        { background: rgba(255,152,0,0.15);  color: #FF9800; }
-.metrics-stat-icon--time         { background: rgba(156,39,176,0.15); color: #9C27B0; }
-
-.metrics-stat-value { font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
-.metrics-stat-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-top: 2px; }
-
-.metrics-progress-item {
-  padding: 14px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  margin-bottom: 8px;
-}
-.metrics-progress-row {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 8px;
-}
-.metrics-progress-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.metrics-progress-value { font-size: 13px; font-weight: 700; color: var(--accent-color); }
-.metrics-progress-bar {
-  height: 8px;
-  background: var(--background-input);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.metrics-progress-fill {
-  height: 100%; border-radius: 4px;
-  transition: width 0.5s ease;
-}
-.metrics-progress-fill--cache   { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
-.metrics-progress-fill--workers { background: linear-gradient(90deg, #2196F3, #03A9F4); }
-.metrics-progress-fill--storage { background: linear-gradient(90deg, #9C27B0, #E91E63); }
-.metrics-progress-fill--backend { background: linear-gradient(90deg, var(--accent-color), var(--accent-color-hover)); }
 
 /* ===================================================================
    SETTINGS MODAL
@@ -1284,13 +1107,6 @@ body {
     text-align: left;
   }
   .settings-tab--active { border-left-color: var(--accent-color); }
-
-  .metrics-dropdown-panel {
-    position: fixed;
-    top: 60px; right: 8px; left: 8px;
-    width: auto;
-  }
-  .metrics-stats-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
@@ -1299,9 +1115,6 @@ body {
   .app-subtitle { display: none; }
 }
 
-@media (max-width: 480px) {
-  .metrics-uptime-value { font-size: 28px; }
-}
 
 /* ===================================================================
    ACCESSIBILITY: REDUCED MOTION

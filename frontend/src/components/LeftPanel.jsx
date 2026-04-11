@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   {
     id: 'dashboard',
     title: 'Dashboard',
-    subtitle: 'Overview & metrics',
+    subtitle: 'Overview',
     icon: DashboardIcon,
   },
   {
