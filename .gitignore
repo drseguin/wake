@@ -23,3 +23,6 @@ Thumbs.db
 
 # Docker volumes (local)
 data/
+
+# REF APPS
+REF_APPS/
