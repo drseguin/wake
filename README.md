@@ -96,18 +96,23 @@ To stop the application:
 
 ---
 
-## Development Mode (SINGLE_USER_MODE)
+## Single User Mode vs Keycloak SSO
 
-By default, the app runs in `SINGLE_USER_MODE=true`, which bypasses Keycloak authentication and provides a synthetic admin user. This is ideal for local development.
+Authentication mode is controlled by the `single_user_mode` field in `backend/keycloak.json`:
 
-To enable Keycloak authentication, set `SINGLE_USER_MODE=false` in your `.env` file or in `docker-compose.yml`, then restart:
+```json
+{
+  "single_user_mode": false,
+  ...
+}
+```
+
+- **`false` (default)** — Keycloak SSO is enabled. Users must log in via Keycloak.
+- **`true`** — Bypasses Keycloak and provides a synthetic admin user. Useful for local development when you don't need authentication.
+
+After changing the value, rebuild the backend:
 
 ```bash
-# Create .env from template
-cp .env.example .env
-
-# Edit SINGLE_USER_MODE=false
-# Then restart
 ./start.sh
 ```
 
@@ -137,10 +142,11 @@ See [documentation/KEYCLOAK_SSO.md](documentation/KEYCLOAK_SSO.md) for complete 
 
 ### Keycloak Configuration
 
-All Keycloak connection settings are in `backend/keycloak.json`. Update this file for production deployments:
+All Keycloak and authentication settings are in `backend/keycloak.json`. Update this file for production deployments:
 
 ```json
 {
+  "single_user_mode": false,
   "server_url": "http://keycloak:8080",
   "public_url": "https://localhost:8443",
   "app_url": "https://localhost",
@@ -151,11 +157,21 @@ All Keycloak connection settings are in `backend/keycloak.json`. Update this fil
 }
 ```
 
+| Field | Description |
+|-------|-------------|
+| `single_user_mode` | `false` = Keycloak SSO enabled, `true` = bypass auth for dev |
+| `server_url` | Internal Keycloak URL (Docker network, server-to-server) |
+| `public_url` | Public Keycloak URL (browser access) |
+| `app_url` | Application URL for OAuth callbacks |
+| `realm` | Keycloak realm name |
+| `client_id` | OAuth client ID |
+| `client_secret` | OAuth client secret (change in production) |
+| `admin_role` | Role name that grants admin access |
+
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SINGLE_USER_MODE` | `true` | Skip Keycloak auth for development |
 | `FLASK_SECRET_KEY` | `dev-secret-key...` | Flask session signing key |
 | `REDIS_URL` | `redis://redis:6379/0` | Redis connection string |
 

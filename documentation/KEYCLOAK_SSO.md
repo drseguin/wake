@@ -81,9 +81,9 @@ User Browser
    - Log in with username: `admin`, password: `admin`
    - Select the **base-app** realm from the dropdown in the top-left corner
 
-4. **Enable SSO in the application:**
-   - Set `SINGLE_USER_MODE=false` in your `.env` file (or `docker-compose.yml`)
-   - Restart: `./start.sh`
+4. **Verify SSO is enabled:**
+   - SSO is enabled by default. Check `backend/keycloak.json` has `"single_user_mode": false`
+   - If you changed it to `true` for development, set it back to `false` and restart: `./start.sh`
 
 ### Pre-Configured Defaults
 
@@ -341,10 +341,11 @@ echo "Admin role assigned successfully"
 
 ### Backend Configuration
 
-All Keycloak settings are centralized in `backend/keycloak.json`:
+All Keycloak and authentication settings are centralized in `backend/keycloak.json`:
 
 ```json
 {
+  "single_user_mode": false,
   "server_url": "http://keycloak:8080",
   "public_url": "https://localhost:8443",
   "app_url": "https://localhost",
@@ -357,6 +358,7 @@ All Keycloak settings are centralized in `backend/keycloak.json`:
 
 | Setting | Description |
 |---------|-------------|
+| `single_user_mode` | `false` = Keycloak SSO enabled, `true` = bypass auth (dev mode) |
 | `server_url` | Internal Keycloak URL (Docker network, used for server-to-server calls) |
 | `public_url` | Public Keycloak URL (browser access, used in authorization URLs) |
 | `app_url` | Application URL for OAuth callbacks |

@@ -52,5 +52,5 @@ class Config:
 
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
-    SINGLE_USER_MODE = os.environ.get('SINGLE_USER_MODE', 'true').lower() == 'true'
     KEYCLOAK = _load_keycloak_config()
+    SINGLE_USER_MODE = KEYCLOAK.get('single_user_mode', False)

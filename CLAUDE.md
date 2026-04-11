@@ -17,7 +17,7 @@ Base App is a skeleton/template application that serves as the starting point fo
 - `frontend/src/contexts/ThemeContext.jsx` — Theme + accent color state management
 - `frontend/src/App.jsx` — Root component, toast/dialog context providers
 - `backend/app.py` — Flask app with auth endpoints
-- `backend/keycloak.json` — All Keycloak config (change for production)
+- `backend/keycloak.json` — All Keycloak config including `single_user_mode` toggle (change for production)
 - `docker-compose.yml` — 6 services: nginx, frontend, backend, keycloak, keycloak-db, redis
 
 ## Conventions
