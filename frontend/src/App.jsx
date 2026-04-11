@@ -62,6 +62,7 @@ export const useDialog = () => useContext(DialogContext);
 function App() {
   const [user, setUser] = useState(null);
   const [singleUserMode, setSingleUserMode] = useState(true);
+  const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [panelOpen, setPanelOpen] = useState(
     () => localStorage.getItem('panelOpen') !== 'false'
@@ -124,6 +125,7 @@ function App() {
       try {
         const config = await api.getConfig();
         setSingleUserMode(config.single_user_mode);
+        if (config.version) setVersion(config.version);
         logger.info(`SINGLE_USER_MODE: ${config.single_user_mode}`);
 
         const userData = await api.getUser();
@@ -217,6 +219,7 @@ function App() {
           panelOpen={panelOpen}
           onTogglePanel={togglePanel}
           user={user}
+          version={version}
           onLogout={handleLogout}
           onOpenSettings={() => setSettingsOpen(true)}
         />

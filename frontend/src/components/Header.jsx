@@ -37,11 +37,12 @@ import MetricsDropdown from './MetricsDropdown';
  * @param {boolean} props.panelOpen - Whether the left panel is open
  * @param {Function} props.onTogglePanel - Toggle panel callback
  * @param {Object} props.user - Current user info
+ * @param {string|null} props.version - Build version string
  * @param {Function} props.onLogout - Logout callback
  * @param {Function} props.onOpenSettings - Open settings modal callback
  * @returns {JSX.Element}
  */
-function Header({ panelOpen, onTogglePanel, user, onLogout, onOpenSettings }) {
+function Header({ panelOpen, onTogglePanel, user, version, onLogout, onOpenSettings }) {
   return (
     <header className="header">
       <button
@@ -76,6 +77,7 @@ function Header({ panelOpen, onTogglePanel, user, onLogout, onOpenSettings }) {
         <ThemeToggle />
         <UserMenu
           user={user}
+          version={version}
           onLogout={onLogout}
           onOpenSettings={onOpenSettings}
         />

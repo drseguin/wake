@@ -96,8 +96,12 @@ def create_app():
 
         @returns {JSON} Configuration object with single_user_mode flag
         """
+        from utils.version_manager import get_version_info
+        version_info = get_version_info()
         return jsonify({
-            'single_user_mode': Config.SINGLE_USER_MODE
+            'single_user_mode': Config.SINGLE_USER_MODE,
+            'version': version_info['version'],
+            'build_timestamp': version_info['build_timestamp']
         })
 
     # ------------------------------------------------------------------ #

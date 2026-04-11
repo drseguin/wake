@@ -10,16 +10,30 @@ echo "========================================="
 echo ""
 
 # Stop existing containers if running
-echo "[1/3] Stopping existing containers..."
+echo "[1/4] Stopping existing containers..."
 docker compose down 2>/dev/null || true
 echo ""
 
+# Write build version and timestamp to version.json
+echo "[2/4] Writing build version and timestamp..."
+BUILD_VERSION=$(date '+v%Y.%m.%d.%H%M')
+BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+cat > backend/version.json << EOF
+{
+  "version": "${BUILD_VERSION}",
+  "build_timestamp": "${BUILD_TIMESTAMP}"
+}
+EOF
+echo "  Version: ${BUILD_VERSION}"
+echo "  Build timestamp: ${BUILD_TIMESTAMP}"
+echo ""
+
 # Build and start
-echo "[2/3] Building containers..."
+echo "[3/4] Building containers..."
 docker compose build
 echo ""
 
-echo "[3/3] Starting containers..."
+echo "[4/4] Starting containers..."
 docker compose up -d
 echo ""
 

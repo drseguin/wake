@@ -50,11 +50,12 @@ function getInitials(user) {
  *
  * @param {Object} props
  * @param {Object} props.user - User info object
+ * @param {string|null} props.version - Build version string
  * @param {Function} props.onLogout - Logout callback
  * @param {Function} props.onOpenSettings - Settings callback
  * @returns {JSX.Element}
  */
-function UserMenu({ user, onLogout, onOpenSettings }) {
+function UserMenu({ user, version, onLogout, onOpenSettings }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -124,6 +125,15 @@ function UserMenu({ user, onLogout, onOpenSettings }) {
           >
             <LogoutIcon /> Logout
           </button>
+
+          {version && (
+            <>
+              <div className="user-menu-divider" />
+              <div className="user-menu-version">
+                {version}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

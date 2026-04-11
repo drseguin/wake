@@ -534,6 +534,17 @@ body {
 .user-menu-item--danger { color: var(--danger-color); }
 .user-menu-item--danger:hover { background: rgba(220, 53, 69, 0.1); }
 
+.user-menu-version {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-family: 'Courier New', monospace;
+  user-select: none;
+  cursor: default;
+}
+
 /* ===================================================================
    THEME TOGGLE
    =================================================================== */
