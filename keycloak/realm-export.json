@@ -3,6 +3,8 @@
   "realm": "base-app",
   "enabled": true,
   "displayName": "Base App",
+  "displayNameHtml": "<strong>Base App</strong>",
+  "loginTheme": "base-app",
   "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

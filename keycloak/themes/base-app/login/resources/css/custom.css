@@ -1,0 +1,154 @@
+/*
+ * Base App — Keycloak login theme
+ * Extends keycloak.v2 (PatternFly 5) and overrides tokens to match App.css.
+ */
+
+:root {
+  --ba-accent:        #FF6B35;
+  --ba-accent-hover:  #FF7F50;
+  --ba-bg:            #F5F5F5;
+  --ba-card:          #FFFFFF;
+  --ba-input:         #FFFFFF;
+  --ba-text:          #1A1A1A;
+  --ba-text-muted:    #666666;
+  --ba-border:        #E0E0E0;
+  --ba-shadow:        0 8px 24px rgba(0, 0, 0, 0.15);
+  --ba-radius:        8px;
+
+  /* Map onto PatternFly v5 tokens used by keycloak.v2 */
+  --pf-v5-global--primary-color--100: var(--ba-accent);
+  --pf-v5-global--primary-color--200: var(--ba-accent-hover);
+  --pf-v5-global--link--Color: var(--ba-accent);
+  --pf-v5-global--link--Color--hover: var(--ba-accent-hover);
+  --pf-v5-global--BackgroundColor--100: var(--ba-card);
+  --pf-v5-global--BackgroundColor--200: var(--ba-bg);
+  --pf-v5-global--Color--100: var(--ba-text);
+  --pf-v5-global--Color--200: var(--ba-text-muted);
+  --pf-v5-global--BorderColor--100: var(--ba-border);
+  --pf-v5-global--FontFamily--sans-serif:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ba-bg:         #1A1A1A;
+    --ba-card:       #2A2A2A;
+    --ba-input:      #333333;
+    --ba-text:       #FFFFFF;
+    --ba-text-muted: #CCCCCC;
+    --ba-border:     #404040;
+    --ba-shadow:     0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+
+html, body {
+  background: var(--ba-bg) !important;
+  color: var(--ba-text) !important;
+  font-family: var(--pf-v5-global--FontFamily--sans-serif) !important;
+}
+
+/* Card */
+.pf-v5-c-login__main,
+.card-pf,
+.login-pf-page .card-pf {
+  background: var(--ba-card) !important;
+  color: var(--ba-text) !important;
+  border: 1px solid var(--ba-border) !important;
+  border-radius: var(--ba-radius) !important;
+  box-shadow: var(--ba-shadow) !important;
+}
+
+/* Header / title */
+#kc-header,
+#kc-header-wrapper,
+.login-pf-page-header,
+.pf-v5-c-login__main-header {
+  color: var(--ba-text) !important;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+/* Labels & text */
+label,
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text,
+#kc-form-wrapper .control-label {
+  color: var(--ba-text) !important;
+  font-weight: 500 !important;
+}
+.pf-v5-c-form__helper-text,
+.subtitle,
+.instruction {
+  color: var(--ba-text-muted) !important;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+select,
+.pf-v5-c-form-control,
+.pf-v5-c-form-control input {
+  background: var(--ba-input) !important;
+  color: var(--ba-text) !important;
+  border: 1px solid var(--ba-border) !important;
+  border-radius: var(--ba-radius) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+select:focus,
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--ba-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2) !important;
+  outline: none !important;
+}
+
+/* Primary button */
+.pf-v5-c-button.pf-m-primary,
+input[type="submit"].pf-v5-c-button,
+#kc-login,
+.btn-primary {
+  background: var(--ba-accent) !important;
+  border-color: var(--ba-accent) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--ba-radius) !important;
+  font-weight: 600 !important;
+  transition: background 0.15s ease;
+}
+.pf-v5-c-button.pf-m-primary:hover,
+input[type="submit"].pf-v5-c-button:hover,
+#kc-login:hover,
+.btn-primary:hover {
+  background: var(--ba-accent-hover) !important;
+  border-color: var(--ba-accent-hover) !important;
+}
+
+/* Links */
+a,
+.pf-v5-c-login__main-footer-band-item a,
+#kc-registration a,
+#kc-info a {
+  color: var(--ba-accent) !important;
+}
+a:hover {
+  color: var(--ba-accent-hover) !important;
+}
+
+/* Alerts */
+.pf-v5-c-alert.pf-m-danger,
+.alert-error {
+  border-left: 4px solid #dc3545 !important;
+}
+
+/* Logo slot (brand area shown above the form) */
+#kc-header-wrapper {
+  background-image: url('../img/logo.svg');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 56px 56px;
+  padding-top: 72px;
+  font-size: 1.25rem;
+}
