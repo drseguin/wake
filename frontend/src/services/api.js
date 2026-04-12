@@ -29,9 +29,39 @@
 import logger from '../utils/logger';
 
 const BASE_URL = '';
+const REFRESH_URL = '/api/v1/auth/refresh';
 
 /**
- * Make an API request with error handling.
+ * Low-level fetch with credentials and JSON content-type. No retry logic.
+ */
+async function rawFetch(endpoint, options) {
+  return fetch(`${BASE_URL}${endpoint}`, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  });
+}
+
+/**
+ * Single-flight refresh — concurrent callers share one in-flight refresh call.
+ */
+let refreshInFlight = null;
+async function refreshOnce() {
+  if (!refreshInFlight) {
+    refreshInFlight = rawFetch(REFRESH_URL, { method: 'POST' })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .finally(() => { refreshInFlight = null; });
+  }
+  return refreshInFlight;
+}
+
+/**
+ * Make an API request with error handling and a single 401→refresh→retry
+ * cycle. Skips the retry on the refresh endpoint itself to avoid recursion.
  *
  * @param {string} endpoint - API endpoint path (e.g., '/api/v1/health')
  * @param {Object} [options] - Fetch options
@@ -41,23 +71,32 @@ const BASE_URL = '';
 async function apiRequest(endpoint, options = {}) {
   logger.debug(`API request: ${options.method || 'GET'} ${endpoint}`);
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  });
+  let response = await rawFetch(endpoint, options);
+
+  if (response.status === 401 && endpoint !== REFRESH_URL) {
+    logger.debug('Got 401; attempting token refresh');
+    const refreshed = await refreshOnce();
+    if (refreshed) {
+      logger.debug('Refresh succeeded; retrying original request');
+      response = await rawFetch(endpoint, options);
+    }
+  }
+
+  const requestId = response.headers.get('X-Request-ID') || '-';
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
-    logger.error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
-    throw new Error(`API error: ${response.status}`);
+    logger.error(`API error [${requestId}]: ${response.status} ${response.statusText} ${endpoint} - ${errorText}`);
+    const err = new Error(`API error: ${response.status}`);
+    err.status = response.status;
+    err.requestId = requestId;
+    throw err;
   }
 
+  if (response.status === 204) return null;
+
   const data = await response.json();
-  logger.debug(`API response: ${endpoint}`, data);
+  logger.debug(`API response [${requestId}]: ${endpoint}`, data);
   return data;
 }
 
@@ -70,7 +109,15 @@ const api = {
 
   getLoginUrl: () => apiRequest('/api/v1/auth/login'),
 
+  refresh: () => apiRequest(REFRESH_URL, { method: 'POST' }),
+
   logout: () => apiRequest('/api/v1/auth/logout', { method: 'POST' }),
+
+  getPreferences: () => apiRequest('/api/v1/user/preferences'),
+  savePreferences: (prefs) => apiRequest('/api/v1/user/preferences', {
+    method: 'PUT',
+    body: JSON.stringify(prefs),
+  }),
 };
 
 export default api;

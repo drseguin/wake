@@ -1,14 +1,20 @@
 services:
   nginx:
-    build: ./nginx
+    build:
+      context: ./nginx
+      args:
+        APP_HOST: ${APP_HOST:-localhost}
     container_name: base-app-nginx
     ports:
       - "443:443"
       - "8443:8443"
     depends_on:
-      - frontend
-      - backend
-      - keycloak
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - base-app-net
     restart: unless-stopped
@@ -16,6 +22,12 @@ services:
   frontend:
     build: ./frontend
     container_name: base-app-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
     networks:
       - base-app-net
     restart: unless-stopped
@@ -27,8 +39,16 @@ services:
       - APP_NAME=${APP_NAME:-Base App}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
       - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/api/v1/health', timeout=2).status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - base-app-net
     restart: unless-stopped
@@ -47,6 +67,7 @@ services:
       - KC_HOSTNAME=https://localhost:8443
       - KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true
       - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
       - KC_PROXY_HEADERS=xforwarded
       - KC_SPI_THEME_CACHE_THEMES=false
       - KC_SPI_THEME_CACHE_TEMPLATES=false
@@ -57,6 +78,9 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
+    # Keycloak 26's minimal runtime image has no curl and its bash is minimal,
+    # so we avoid an in-container healthcheck here. start.sh polls the
+    # public /health/ready endpoint externally during boot instead.
     networks:
       - base-app-net
     restart: unless-stopped
@@ -82,6 +106,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: base-app-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - base-app-net
     restart: unless-stopped

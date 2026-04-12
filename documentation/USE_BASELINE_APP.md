@@ -85,7 +85,9 @@ Run the helper script to do it all in one shot:
 ./scripts/rename-app.sh "ACME App" "acme-app"
 ```
 
-The script is idempotent and only touches tracked baseline files. When it finishes, check what changed:
+The script is idempotent and only touches tracked baseline files. On each run it also generates fresh random values for `FLASK_SECRET_KEY` and the Keycloak `client_secret` via `openssl rand -hex 32`, writes them into `.env` / `backend/keycloak.json` / `keycloak/realm-export.json`, and prints them **once** at the end. Copy those two values somewhere safe — they are not displayed again.
+
+When it finishes, check what changed:
 
 ```bash
 git status
@@ -101,19 +103,20 @@ git diff
 | `docker-compose.yml` | container names, network name, `APP_NAME` env default |
 | `backend/config.py` | `APP_NAME` default and docstring |
 | `backend/app.py` | docstring, hard-coded role names |
-| `backend/keycloak.json` | `realm`, `client_id`, `client_secret`, `admin_role` |
+| `backend/keycloak.json` | `realm`, `client_id`, `client_secret` (rotated to random), `admin_role` |
+| `.env`, `.env.example` | `APP_NAME`, `FLASK_SECRET_KEY` (rotated to random) |
 | `keycloak/realm-export.json` | realm id, display names, login theme, client, roles, default role |
 | `keycloak/themes/base-app/` | folder renamed to `keycloak/themes/acme-app/`, theme strings updated |
 | `frontend/package.json` | `name` |
-| `frontend/index.html` | `<title>` and description |
+| `frontend/index.html` | `<title>`, meta description, Open Graph tags |
+| `frontend/src/**/*.{jsx,js,css}` | JSDoc headers, hardcoded strings |
+| `frontend/public/*.svg` | SVG text inside favicon / og-image / apple-touch-icon |
 | `README.md`, `CLAUDE.md`, `documentation/*.md` | prose references |
 
 ### Things the script does not touch (do these manually)
 
-- **`backend/keycloak.json` → `client_secret`.** The script renames the string `base-app-secret` → `acme-app-secret`, which matches the baseline's demo secret but is still a known value. For anything beyond local dev, generate a new secret and update it in both `backend/keycloak.json` and `keycloak/realm-export.json` (under `clients[].secret`).
-- **`FLASK_SECRET_KEY`** in `.env` — rotate it for any shared environment.
-- **Logger prefix** `BA:` in `frontend/src/utils/logger.js` and `backend/utils/logger.py` — optional. If you want `AA:` or similar, change it by hand.
-- **Favicon / logo assets** under `frontend/src/assets/` and `keycloak/themes/.../resources/` — replace with your app's branding.
+- **Logger prefix** `DSC:` in `frontend/src/utils/logger.js` and `backend/utils/logger.py` — the author's signature across every app. If you want a different prefix, change it by hand.
+- **Branding assets.** `frontend/public/favicon.svg`, `apple-touch-icon.svg`, and `og-image.svg` are neutral placeholders with the generic "App"-shaped wordmark. Replace with your app's real logo when you have it. If you swap PNGs in for the SVGs, update the `<link>` / `<meta>` tags in `frontend/index.html` to match. The Keycloak login theme under `keycloak/themes/<slug>/login/resources/` also has branding worth replacing.
 
 ---
 

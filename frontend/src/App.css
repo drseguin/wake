@@ -1096,6 +1096,287 @@ body {
 }
 
 /* ===================================================================
+   CONNECTION STATUS LED
+   =================================================================== */
+
+.connection-led {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--background-card);
+  transition: background-color 180ms ease;
+}
+
+.connection-led--healthy   { background: #22c55e; box-shadow: 0 0 6px #22c55e66, 0 0 0 2px var(--background-card); }
+.connection-led--degraded  { background: #eab308; box-shadow: 0 0 6px #eab30866, 0 0 0 2px var(--background-card); }
+.connection-led--unhealthy { background: #ef4444; box-shadow: 0 0 6px #ef444466, 0 0 0 2px var(--background-card); animation: connection-pulse 1.4s ease-in-out infinite; }
+
+@keyframes connection-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.connection-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  backdrop-filter: blur(2px);
+}
+
+.connection-overlay-card {
+  max-width: 440px;
+  width: 100%;
+  padding: 1.5rem 1.75rem;
+  text-align: center;
+  border-color: #ef4444;
+}
+
+.connection-overlay-title {
+  margin: 0 0 0.5rem;
+  color: #ef4444;
+}
+
+.connection-overlay-message {
+  color: var(--text-secondary);
+  margin: 0 0 1.25rem;
+}
+
+/* ===================================================================
+   ERROR BOUNDARY
+   =================================================================== */
+
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--background-base);
+}
+
+.error-boundary-card {
+  max-width: 640px;
+  width: 100%;
+  padding: 2rem;
+  border-color: var(--error-color, #dc3545);
+}
+
+.error-boundary-title {
+  margin: 0 0 0.5rem;
+  color: var(--error-color, #dc3545);
+  font-size: 1.5rem;
+}
+
+.error-boundary-message {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.error-boundary-stack {
+  background: var(--background-alt, #1e1e1e);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 0 0 1.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 320px;
+}
+
+.error-boundary-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===================================================================
+   NOT FOUND PAGE
+   =================================================================== */
+
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.not-found-code {
+  font-size: 6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-color);
+  margin: 0;
+}
+
+.not-found-title {
+  font-size: 1.5rem;
+  margin: 0.5rem 0 0.25rem;
+  color: var(--text-primary);
+}
+
+.not-found-message {
+  margin: 0 0 1.5rem;
+  max-width: 440px;
+}
+
+/* ===================================================================
+   EMPTY STATE
+   =================================================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  gap: 0.75rem;
+}
+
+.empty-state-illustration {
+  width: 64px;
+  height: 64px;
+  color: var(--text-tertiary, var(--text-secondary));
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.empty-state-description {
+  margin: 0;
+  max-width: 420px;
+  font-size: 0.875rem;
+}
+
+.empty-state-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===================================================================
+   TOOLTIP
+   =================================================================== */
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  z-index: 9999;
+  padding: 6px 10px;
+  background: var(--tooltip-bg, #1a1a1a);
+  color: var(--tooltip-text, #fff);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.tooltip-wrapper[data-tooltip-open='true'] .tooltip-bubble {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tooltip-bubble[data-placement='top']    { bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 4px); }
+.tooltip-bubble[data-placement='bottom'] { top: calc(100% + 6px);    left: 50%; transform: translate(-50%, -4px); }
+.tooltip-bubble[data-placement='left']   { right: calc(100% + 6px);  top: 50%;  transform: translate(4px, -50%); }
+.tooltip-bubble[data-placement='right']  { left: calc(100% + 6px);   top: 50%;  transform: translate(-4px, -50%); }
+
+.tooltip-wrapper[data-tooltip-open='true'] .tooltip-bubble[data-placement='top']    { transform: translate(-50%, 0); }
+.tooltip-wrapper[data-tooltip-open='true'] .tooltip-bubble[data-placement='bottom'] { transform: translate(-50%, 0); }
+.tooltip-wrapper[data-tooltip-open='true'] .tooltip-bubble[data-placement='left']   { transform: translate(0, -50%); }
+.tooltip-wrapper[data-tooltip-open='true'] .tooltip-bubble[data-placement='right']  { transform: translate(0, -50%); }
+
+/* ===================================================================
+   FORM FIELD
+   =================================================================== */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.form-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-field-label--required::after {
+  content: ' *';
+  color: var(--error-color, #dc3545);
+}
+
+.form-field-input,
+.form-field-textarea,
+.form-field-select {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--background-input, var(--background-card));
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.form-field-input:focus,
+.form-field-textarea:focus,
+.form-field-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-light);
+}
+
+.form-field-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-field--invalid .form-field-input,
+.form-field--invalid .form-field-textarea,
+.form-field--invalid .form-field-select {
+  border-color: var(--error-color, #dc3545);
+}
+
+.form-field-help,
+.form-field-error {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.form-field-help  { color: var(--text-secondary); }
+.form-field-error { color: var(--error-color, #dc3545); }
+
+/* ===================================================================
    RESPONSIVE
    =================================================================== */
 

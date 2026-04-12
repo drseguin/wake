@@ -43,11 +43,12 @@ from datetime import datetime, timezone
 
 import redis
 import requests
-from flask import Flask, jsonify, request, redirect, make_response
+from flask import Flask, g, jsonify, request, redirect, make_response
 from flask_cors import CORS
 
 from config import Config
 from utils.logger import logger
+from utils.auth import require_auth
 
 
 def create_app():
@@ -66,6 +67,23 @@ def create_app():
 
     logger.info(f'Starting {Config.APP_NAME} backend')
     logger.info(f'SINGLE_USER_MODE: {Config.SINGLE_USER_MODE}')
+
+    # ------------------------------------------------------------------ #
+    # Request ID Propagation
+    # ------------------------------------------------------------------ #
+
+    @app.before_request
+    def _assign_request_id():
+        """Stamp every request with an id for end-to-end tracing."""
+        incoming = request.headers.get('X-Request-ID', '').strip()
+        g.request_id = incoming[:32] if incoming else uuid.uuid4().hex[:12]
+
+    @app.after_request
+    def _propagate_request_id(response):
+        """Echo the request id back so the frontend can log it."""
+        if hasattr(g, 'request_id'):
+            response.headers['X-Request-ID'] = g.request_id
+        return response
 
     # ------------------------------------------------------------------ #
     # Health Check
@@ -101,6 +119,8 @@ def create_app():
         return jsonify({
             'app_name': Config.APP_NAME,
             'single_user_mode': Config.SINGLE_USER_MODE,
+            'admin_role': kc.get('admin_role'),
+            'log_level': Config.LOG_LEVEL,
             'version': version_info['version'],
             'build_timestamp': version_info['build_timestamp']
         })
@@ -121,12 +141,13 @@ def create_app():
         @throws {401} When no valid session exists
         """
         if Config.SINGLE_USER_MODE:
+            admin_role = kc.get('admin_role', 'admin')
             return jsonify({
                 'username': 'admin',
                 'email': 'admin@localhost',
                 'firstName': 'Local',
                 'lastName': 'Admin',
-                'roles': ['base-app-user', 'base-app-admin']
+                'roles': [admin_role]
             })
 
         token = request.cookies.get('auth_token')
@@ -310,6 +331,101 @@ def create_app():
         )
 
         return response
+
+    @app.route('/api/v1/auth/refresh', methods=['POST'])
+    def auth_refresh():
+        """
+        Exchange the stored refresh token for a new access token.
+
+        Reads the current session from Redis via the auth_token cookie,
+        calls Keycloak's token endpoint with grant_type=refresh_token,
+        updates the session, and extends its TTL. Idempotent — safe to call
+        repeatedly.
+
+        @returns {JSON} { ok: true } on success
+        @throws {401} When no session exists
+        @throws {503} When Keycloak is unreachable
+        """
+        if Config.SINGLE_USER_MODE:
+            return jsonify({'ok': True})
+
+        token = request.cookies.get('auth_token')
+        if not token:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        raw = redis_client.get(f'session:{token}')
+        if not raw:
+            return jsonify({'error': 'Session expired'}), 401
+
+        session = json.loads(raw)
+        refresh_token = session.get('refresh_token')
+        if not refresh_token:
+            logger.warn('No refresh token in session; cannot refresh')
+            return jsonify({'error': 'No refresh token'}), 401
+
+        token_url = f'{kc["server_url"]}/realms/{kc["realm"]}/protocol/openid-connect/token'
+        try:
+            resp = requests.post(token_url, data={
+                'grant_type': 'refresh_token',
+                'client_id': kc['client_id'],
+                'client_secret': kc['client_secret'],
+                'refresh_token': refresh_token,
+            }, timeout=10)
+        except requests.RequestException as e:
+            logger.error(f'Refresh request failed: {str(e)}')
+            return jsonify({'error': 'Authentication service unavailable'}), 503
+
+        if resp.status_code != 200:
+            logger.warn(f'Token refresh rejected: {resp.status_code}')
+            redis_client.delete(f'session:{token}')
+            return jsonify({'error': 'Refresh failed'}), 401
+
+        tokens = resp.json()
+        session['access_token'] = tokens['access_token']
+        if tokens.get('refresh_token'):
+            session['refresh_token'] = tokens['refresh_token']
+
+        redis_client.setex(f'session:{token}', 28800, json.dumps(session))
+        logger.debug(f'Refreshed session for {session["user_info"].get("username")}')
+        return jsonify({'ok': True})
+
+    # ------------------------------------------------------------------ #
+    # User Preferences
+    # ------------------------------------------------------------------ #
+
+    @app.route('/api/v1/user/preferences', methods=['GET'])
+    @require_auth
+    def get_preferences():
+        """
+        Return the current user's persisted preferences (theme, accent, etc.).
+
+        @returns {JSON} Preferences object (empty {} when none saved yet)
+        """
+        username = g.user.get('username', 'unknown')
+        raw = redis_client.get(f'prefs:{username}')
+        prefs = json.loads(raw) if raw else {}
+        return jsonify(prefs)
+
+    @app.route('/api/v1/user/preferences', methods=['PUT'])
+    @require_auth
+    def put_preferences():
+        """
+        Merge the request body into the user's stored preferences. Missing
+        keys are left untouched, so clients can PUT a partial object.
+
+        @returns {JSON} The full merged preferences object
+        """
+        username = g.user.get('username', 'unknown')
+        body = request.get_json(silent=True) or {}
+        if not isinstance(body, dict):
+            return jsonify({'error': 'Body must be a JSON object'}), 400
+
+        raw = redis_client.get(f'prefs:{username}')
+        existing = json.loads(raw) if raw else {}
+        existing.update(body)
+        redis_client.set(f'prefs:{username}', json.dumps(existing))
+        logger.debug(f'Saved preferences for {username}: {list(body.keys())}')
+        return jsonify(existing)
 
     @app.route('/api/v1/auth/logout', methods=['POST'])
     def auth_logout():

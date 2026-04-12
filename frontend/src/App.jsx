@@ -38,6 +38,9 @@ import Dashboard from './components/Dashboard';
 import Toast from './components/Toast';
 import Dialog from './components/Dialog';
 import Settings from './components/Settings';
+import PreferencesSync from './components/PreferencesSync';
+import NotFound from './pages/NotFound';
+import { AuthProvider } from './contexts/AuthContext';
 import api from './services/api';
 import logger from './utils/logger';
 
@@ -62,6 +65,7 @@ export const useDialog = () => useContext(DialogContext);
 function App() {
   const [user, setUser] = useState(null);
   const [appName, setAppName] = useState('Base App');
+  const [adminRole, setAdminRole] = useState(null);
   const [singleUserMode, setSingleUserMode] = useState(true);
   const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +136,9 @@ function App() {
           if (meta) meta.setAttribute('content', config.app_name);
         }
         setSingleUserMode(config.single_user_mode);
+        if (config.admin_role) setAdminRole(config.admin_role);
         if (config.version) setVersion(config.version);
+        if (config.log_level) logger.setLevel(config.log_level);
         logger.info(`SINGLE_USER_MODE: ${config.single_user_mode}`);
 
         const userData = await api.getUser();
@@ -190,13 +196,16 @@ function App() {
 
   // Show login screen if not authenticated and not in single user mode
   if (!loading && !user && !singleUserMode) {
+    const [firstWord, ...restWords] = appName.split(' ');
     return (
       <ToastContext.Provider value={{ showToast, dismissToast }}>
         <div className="login-screen">
           <div className="login-card card">
             <h1>
-              <span className="logo-text-base">Base</span>
-              <span className="logo-text-app">App</span>
+              <span className="logo-text-base">{firstWord}</span>
+              {restWords.length > 0 && (
+                <span className="logo-text-app">{restWords.join(' ')}</span>
+              )}
             </h1>
             <p>Sign in to continue</p>
             <button className="btn btn-primary btn-lg" onClick={handleLogin}>
@@ -220,12 +229,15 @@ function App() {
   }
 
   return (
+    <AuthProvider user={user} adminRole={adminRole}>
+    <PreferencesSync />
     <ToastContext.Provider value={{ showToast, dismissToast }}>
       <DialogContext.Provider value={{ showDialog }}>
         <Header
           panelOpen={panelOpen}
           onTogglePanel={togglePanel}
           user={user}
+          appName={appName}
           version={version}
           onLogout={handleLogout}
           onOpenSettings={() => setSettingsOpen(true)}
@@ -241,7 +253,11 @@ function App() {
           className="main-content"
           style={{ marginLeft: panelOpen ? (parseInt(localStorage.getItem('leftPanelWidth')) || 280) : 0 }}
         >
-          {activeNav === 'dashboard' && <Dashboard showToast={showToast} appName={appName} />}
+          {activeNav === 'dashboard' ? (
+            <Dashboard showToast={showToast} appName={appName} />
+          ) : (
+            <NotFound onHome={() => setActiveNav('dashboard')} />
+          )}
         </main>
 
         {settingsOpen && (
@@ -256,6 +272,7 @@ function App() {
         {dialog && <Dialog {...dialog} />}
       </DialogContext.Provider>
     </ToastContext.Provider>
+    </AuthProvider>
   );
 }
 

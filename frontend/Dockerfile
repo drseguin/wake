@@ -12,6 +12,10 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:alpine
 
+# curl is used by the docker-compose healthcheck. nginx:alpine ships neither
+# curl nor a reliable wget flavor, so install it explicitly (~2MB).
+RUN apk add --no-cache curl
+
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # SPA fallback: serve index.html for all routes

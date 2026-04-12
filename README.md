@@ -220,7 +220,7 @@ base-app/
 │       ├── services/
 │       │   └── api.js          # HTTP client
 │       ├── utils/
-│       │   └── logger.js       # Unified logger (BA: prefix)
+│       │   └── logger.js       # Unified logger (DSC: prefix)
 │       └── assets/icons/       # Google Material Symbols SVGs
 ├── backend/
 │   ├── Dockerfile
@@ -229,7 +229,7 @@ base-app/
 │   ├── config.py               # Configuration manager
 │   ├── keycloak.json           # Keycloak connection config
 │   └── utils/
-│       └── logger.py           # Unified logger (BA: prefix)
+│       └── logger.py           # Unified logger (DSC: prefix)
 ├── nginx/
 │   ├── Dockerfile              # nginx + self-signed cert generation
 │   └── nginx.conf              # Reverse proxy configuration
@@ -257,5 +257,5 @@ base-app/
 
 - **Keycloak realm import** only runs on first boot. To re-import after changes, run `./stop.sh` (which removes volumes) then `./start.sh`.
 - **Self-signed certificates** will trigger browser warnings. Accept them on both `https://localhost` and `https://localhost:8443`.
-- **Logging:** All code uses the unified logger with `BA:` prefix. Never use raw `console.log` or `print()`.
+- **Logging:** All code uses the unified logger with `DSC:` prefix. Never use raw `console.log` or `print()`.
 - **Icons:** Only Google Material Symbols (Outlined) SVGs stored locally. No CDN icon libraries.

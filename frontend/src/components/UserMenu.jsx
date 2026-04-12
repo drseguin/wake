@@ -31,6 +31,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SettingsIcon from '../assets/icons/settings.svg?react';
 import LogoutIcon from '../assets/icons/logout.svg?react';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Get user initials from first/last name or username.
@@ -58,6 +59,7 @@ function getInitials(user) {
 function UserMenu({ user, version, onLogout, onOpenSettings }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -82,7 +84,6 @@ function UserMenu({ user, version, onLogout, onOpenSettings }) {
   if (!user) return null;
 
   const initials = getInitials(user);
-  const isAdmin = user.roles?.includes('base-app-admin');
   const displayName = user.firstName && user.lastName
     ? `${user.firstName} ${user.lastName}`
     : user.username;

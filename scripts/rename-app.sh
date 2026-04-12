@@ -81,6 +81,15 @@ for f in "${FILES[@]}"; do
   replace_in_file "$f"
 done
 
+# Frontend source + public assets — any slug or display string baked in.
+# Excludes node_modules and dist by scoping to src and public.
+for dir in frontend/src frontend/public; do
+  [[ -d "$dir" ]] || continue
+  while IFS= read -r -d '' f; do
+    replace_in_file "$f"
+  done < <(find "$dir" -type f \( -name '*.jsx' -o -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' \) -print0)
+done
+
 # Keycloak theme files — replace tokens, then rename the directory.
 THEME_DIR_OLD="keycloak/themes/${OLD_SLUG}"
 THEME_DIR_NEW="keycloak/themes/${NEW_SLUG}"
@@ -100,6 +109,51 @@ if [[ -d "$THEME_DIR_OLD" ]]; then
     fi
     echo "  renamed theme directory → $THEME_DIR_NEW"
   fi
+fi
+
+# ------------------------------------------------------------------ #
+# Secret rotation
+# ------------------------------------------------------------------ #
+# Runs AFTER slug replacement so we don't care what the baseline value was.
+# Generates fresh random values and writes them into .env, backend/keycloak.json,
+# and keycloak/realm-export.json. Prints both once so the user can stash them.
+
+if ! command -v openssl >/dev/null 2>&1; then
+  echo
+  echo "WARNING: openssl not found on PATH — skipping secret rotation."
+  echo "         Rotate FLASK_SECRET_KEY and Keycloak client_secret manually"
+  echo "         before deploying to any shared environment."
+else
+  NEW_FLASK_SECRET="$(openssl rand -hex 32)"
+  NEW_CLIENT_SECRET="$(openssl rand -hex 32)"
+
+  rotate() {
+    local file="$1" pattern="$2" replacement="$3"
+    [[ -f "$file" ]] || return 0
+    "${SED_INPLACE[@]}" -E -e "s|${pattern}|${replacement}|" "$file"
+    echo "  rotated secret in $file"
+  }
+
+  # .env / .env.example — FLASK_SECRET_KEY=...
+  rotate .env         '^(FLASK_SECRET_KEY=).*'       "\\1${NEW_FLASK_SECRET}"
+  rotate .env.example '^(FLASK_SECRET_KEY=).*'       "\\1${NEW_FLASK_SECRET}"
+
+  # backend/keycloak.json — "client_secret": "..."
+  rotate backend/keycloak.json \
+    '("client_secret"[[:space:]]*:[[:space:]]*")[^"]*(")' \
+    "\\1${NEW_CLIENT_SECRET}\\2"
+
+  # keycloak/realm-export.json — "secret": "..." (clients block)
+  rotate keycloak/realm-export.json \
+    '("secret"[[:space:]]*:[[:space:]]*")[^"]*(")' \
+    "\\1${NEW_CLIENT_SECRET}\\2"
+
+  echo
+  echo "================================================================"
+  echo "  SECRETS ROTATED — save these now, they are not shown again:"
+  echo "  FLASK_SECRET_KEY    = ${NEW_FLASK_SECRET}"
+  echo "  Keycloak secret     = ${NEW_CLIENT_SECRET}"
+  echo "================================================================"
 fi
 
 echo

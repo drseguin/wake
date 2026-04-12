@@ -76,3 +76,53 @@ The version is stored in App state from the config response and passed through `
 - **`./stop.sh` does not update the version.** Only `./start.sh` generates a new version.
 - **"dev" fallback.** If `version.json` is missing or unreadable, the backend returns `"dev"` as the version. This is normal during local development without running `start.sh`.
 - **No restart needed for version changes.** Since `start.sh` writes the file before building containers, the new version is always current when the app starts.
+
+---
+
+## Release Process
+
+The date-based `v{YYYY}.{MM}.{DD}.{HHMM}` is the **build** identifier — enough to answer "what's deployed right now" and "is this the one from yesterday's hotfix." For user-facing releases (shipping a new version of your app to users), layer a human-meaningful semantic version on top:
+
+1. **Pick a semver.** The `frontend/package.json` `"version"` field holds the semantic version (`MAJOR.MINOR.PATCH`):
+   - **MAJOR** — breaking changes to the public API, auth flow, or data shape
+   - **MINOR** — new features, backward-compatible
+   - **PATCH** — bug fixes, backward-compatible
+2. **Bump it.** Edit `frontend/package.json` `"version"` in your release commit.
+3. **Update `CHANGELOG.md`.** Move items from `## [Unreleased]` into a new section headed with the new version and today's date (Keep a Changelog format — see below).
+4. **Tag the commit.** `git tag -a v1.2.0 -m "Release 1.2.0"` and `git push --tags`.
+5. **Run `./start.sh`** to generate a fresh build identifier. The build id (e.g. `v2026.04.11.1430`) shows in the user menu; the semver lives in `package.json` and the changelog.
+
+The build id and the semver answer different questions:
+- **Build id** — which binary is running right now
+- **Semver** — which release is this binary a part of
+
+## Changelog Convention
+
+`CHANGELOG.md` at the repo root follows the [Keep a Changelog](https://keepachangelog.com/) format:
+
+```markdown
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- ...
+
+### Changed
+- ...
+
+### Fixed
+- ...
+
+## [1.2.0] - 2026-04-11
+
+### Added
+- New feature X
+```
+
+Standard section headings: **Added**, **Changed**, **Deprecated**, **Removed**, **Fixed**, **Security**. Use only the ones that apply to each release.
