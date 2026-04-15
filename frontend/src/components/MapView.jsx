@@ -30,6 +30,7 @@ import locationService from '../services/locationService';
 import logger from '../utils/logger';
 import { waypointDivIcon, crewBoatDivIcon } from '../utils/mapIcons';
 import WaypointDialog from './WaypointDialog';
+import ShareLocationDialog from './ShareLocationDialog';
 import { useToast, useDialog } from '../App';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -93,14 +94,21 @@ function MapView() {
   const [position, setPosition] = useState(null);
   const [geoError, setGeoError] = useState(null);
   const [hasCentered, setHasCentered] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [shareState, setShareState] = useState({
+    enabled: false, audience_mode: 'all', audience_crew_ids: [],
+    duration_mode: 'indefinite', expires_at: null,
+  });
   const [waypoints, setWaypoints] = useState([]);
   const [crewLocs, setCrewLocs] = useState([]);
   const [crews, setCrews] = useState([]);
+  const [homeMarinaId, setHomeMarinaId] = useState(null);
   const [dialogState, setDialogState] = useState(null); // null | { mode, waypoint?, lat?, lng? }
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const mapRef = useRef(null);
 
-  // Subscribe to position + sharing flag.
+  const sharing = shareState.enabled;
+
+  // Subscribe to position + sharing state.
   useEffect(() => {
     locationService.start();
     locationService.hydrateSharing();
@@ -108,7 +116,7 @@ function MapView() {
       setPosition(p);
       if (err) setGeoError(err); else setGeoError(null);
     });
-    const unsubShare = locationService.subscribeSharing(setSharing);
+    const unsubShare = locationService.subscribeShare(setShareState);
     return () => { unsubPos(); unsubShare(); };
   }, []);
 
@@ -132,18 +140,42 @@ function MapView() {
     reloadWaypoints();
     reloadCrewLocs();
     api.listCrews().then(setCrews).catch(() => {});
+    api.getProfile()
+      .then((p) => setHomeMarinaId(p?.home_marina_id ?? null))
+      .catch(() => {});
     const id = setInterval(reloadCrewLocs, CREW_REFRESH_MS);
     return () => clearInterval(id);
   }, [reloadWaypoints, reloadCrewLocs]);
 
   // ---- handlers ----
 
-  async function toggleSharing() {
+  async function submitShare(payload) {
     try {
-      await locationService.setSharing(!sharing);
-      showToast(!sharing ? 'Now sharing your position with your crews' : 'Sharing off', 'info');
+      await locationService.updateSharing(payload);
+      showToast(
+        payload.enabled ? 'Sharing your position' : 'Sharing off',
+        'info',
+      );
+      setShareDialogOpen(false);
     } catch (err) {
-      showToast('Could not update sharing', 'error');
+      if (err.status === 400) {
+        // Most common case: server says set a home marina first. Surface
+        // the dialog's inline "no home marina" screen by flipping local
+        // state so the dialog re-renders in that mode.
+        setHomeMarinaId(null);
+        throw new Error('Set your home marina in your Profile before sharing.');
+      }
+      throw err;
+    }
+  }
+
+  async function stopSharing() {
+    try {
+      await locationService.updateSharing({ enabled: false });
+      showToast('Sharing off', 'info');
+      setShareDialogOpen(false);
+    } catch (err) {
+      showToast('Could not stop sharing', 'error');
     }
   }
 
@@ -303,8 +335,9 @@ function MapView() {
 
       <div className="map-controls">
         <button className={`btn ${sharing ? 'btn-primary' : 'btn-secondary'} map-share-btn`}
-                onClick={toggleSharing}>
-          {sharing ? '● Sharing position' : 'Share my position'}
+                onClick={() => setShareDialogOpen(true)}
+                title={sharing ? 'Change audience or stop sharing' : 'Share your position'}>
+          {sharing ? `● Sharing (${audienceLabel(shareState)})` : 'Share my position'}
         </button>
         <button className="btn btn-secondary map-share-btn"
                 onClick={recenterOnMe}
@@ -333,8 +366,29 @@ function MapView() {
           onSave={onSaveWaypoint}
         />
       )}
+
+      {shareDialogOpen && (
+        <ShareLocationDialog
+          currentState={shareState}
+          crews={crews}
+          hasHomeMarina={homeMarinaId != null}
+          isSharing={sharing}
+          onClose={() => setShareDialogOpen(false)}
+          onSubmit={submitShare}
+          onStop={stopSharing}
+        />
+      )}
     </div>
   );
+}
+
+function audienceLabel(s) {
+  if (s.audience_mode === 'marina') return 'marina';
+  if (s.audience_mode === 'crews') {
+    const n = (s.audience_crew_ids || []).length;
+    return n === 1 ? '1 crew' : `${n} crews`;
+  }
+  return 'all crews';
 }
 
 export default MapView;
