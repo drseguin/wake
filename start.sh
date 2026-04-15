@@ -62,12 +62,20 @@ fi
 
 APP_NAME="${APP_NAME:-WAKE App}"
 APP_HOST="${APP_HOST:-localhost}"
-export APP_NAME APP_HOST
+APP_PORT="${APP_PORT:-443}"
+export APP_NAME APP_HOST APP_PORT
+
+if [[ "$APP_PORT" == "443" ]]; then
+  APP_URL="https://${APP_HOST}"
+else
+  APP_URL="https://${APP_HOST}:${APP_PORT}"
+fi
 
 echo "========================================="
 echo "  ${APP_NAME} - Starting..."
 echo "  Env file: ${ENV_FILE}"
 echo "  APP_HOST: ${APP_HOST}"
+echo "  APP_PORT: ${APP_PORT}"
 echo "========================================="
 echo ""
 
@@ -151,7 +159,7 @@ echo "========================================="
 echo "  ${APP_NAME} is running!"
 echo "========================================="
 echo ""
-echo "  Application:    https://${APP_HOST}"
+echo "  Application:    ${APP_URL}"
 echo "  Keycloak Admin: https://${APP_HOST}:8443/admin"
 echo "    Username: admin"
 echo "    Password: admin"

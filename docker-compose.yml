@@ -6,7 +6,7 @@ services:
         APP_HOST: ${APP_HOST:-localhost}
     container_name: wake-app-nginx
     ports:
-      - "443:443"
+      - "${APP_PORT:-443}:443"
       - "8443:8443"
     depends_on:
       backend:
