@@ -11,7 +11,7 @@
 
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'wake-tiles-v1';
+const CACHE_NAME = 'wake-tiles-v2';
 
 // Hosts whose responses we cache. Anything else passes through untouched.
 const TILE_HOSTS = [
@@ -24,6 +24,8 @@ const TILE_HOSTS = [
   't2.openseamap.org',
   't3.openseamap.org',
   'tileservice.charts.noaa.gov',
+  'server.arcgisonline.com',
+  'services.arcgisonline.com',
 ];
 
 self.addEventListener('install', (event) => {

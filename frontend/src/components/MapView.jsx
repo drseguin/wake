@@ -1,15 +1,17 @@
 /**
  * MapView — Leaflet wrapper for WAKE's marine dashboard.
  *
- * @fileoverview Renders OSM + OpenSeaMap (and optional NOAA / depth) layers,
- * the user's own position via locationService, all visible waypoints
- * (own + crew-shared), and crew members who are broadcasting their position.
+ * @fileoverview Renders OSM + Esri Ocean bathymetry base layers, OpenSeaMap
+ * seamarks, NOAA charts (US), and depth-label overlays; plus the user's own
+ * position via locationService, all visible waypoints (own + crew-shared),
+ * and crew members who are broadcasting their position.
  *
  * Right-click (or long-press) on the map to drop a new waypoint. Clicking
  * a waypoint marker opens a popup with edit / delete actions if owned.
+ * Use the Recenter button to fly back to your current GPS fix.
  *
  * @author David Seguin
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2026
  * @license Professional - All Rights Reserved
  */
@@ -44,8 +46,16 @@ const SEAMARK_TILE_URL = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
 const SEAMARK_ATTRIBUTION = 'Seamarks &copy; <a href="https://www.openseamap.org">OpenSeaMap</a>';
 const NOAA_TILE_URL = 'https://tileservice.charts.noaa.gov/tiles/50000_1/{z}/{x}/{y}.png';
 const NOAA_ATTRIBUTION = 'Charts &copy; <a href="https://www.charts.noaa.gov">NOAA</a> (US waters)';
-const DEPTH_TILE_URL = 'https://tiles.openseamap.org/depth/{z}/{x}/{y}.png';
-const DEPTH_ATTRIBUTION = 'Depth &copy; <a href="https://www.openseamap.org">OpenSeaMap</a> (sparse)';
+// Esri's World Ocean Base is a raster tile service with global bathymetry
+// shading and sounding labels (sources: GEBCO, NOAA, CHS, and others).
+// Unlike OpenSeaMap's near-empty crowdsourced depth tiles, this actually
+// shows depth everywhere — including Canadian inland waters.
+const ESRI_OCEAN_BASE_URL =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
+const ESRI_OCEAN_REF_URL =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}';
+const ESRI_OCEAN_ATTRIBUTION =
+  'Tiles &copy; <a href="https://www.esri.com">Esri</a> — Sources: GEBCO, NOAA, CHS, and others';
 
 const CREW_REFRESH_MS = 30_000;
 const STALE_MS = 10 * 60 * 1000;
@@ -88,6 +98,7 @@ function MapView() {
   const [crewLocs, setCrewLocs] = useState([]);
   const [crews, setCrews] = useState([]);
   const [dialogState, setDialogState] = useState(null); // null | { mode, waypoint?, lat?, lng? }
+  const mapRef = useRef(null);
 
   // Subscribe to position + sharing flag.
   useEffect(() => {
@@ -138,6 +149,17 @@ function MapView() {
 
   function onContextMenu(latlng) {
     setDialogState({ mode: 'create', lat: latlng.lat, lng: latlng.lng });
+  }
+
+  function recenterOnMe() {
+    if (!mapRef.current) return;
+    if (!position) {
+      showToast(geoError
+        ? `Location unavailable: ${geoError}`
+        : 'Waiting for a GPS fix…', 'info');
+      return;
+    }
+    mapRef.current.flyTo([position.lat, position.lng], 14, { duration: 0.8 });
   }
 
   async function onSaveWaypoint(payload) {
@@ -193,19 +215,25 @@ function MapView() {
         zoom={DEFAULT_ZOOM}
         scrollWheelZoom
         className="map-canvas"
+        ref={mapRef}
       >
         <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="OpenStreetMap">
+          <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer url={OSM_TILE_URL} attribution={OSM_ATTRIBUTION} maxZoom={19} />
           </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer checked name="Ocean (depth shading)">
+            <TileLayer url={ESRI_OCEAN_BASE_URL} attribution={ESRI_OCEAN_ATTRIBUTION}
+                       maxZoom={19} maxNativeZoom={13} />
+          </LayersControl.BaseLayer>
+          <LayersControl.Overlay checked name="Depth labels (soundings, places)">
+            <TileLayer url={ESRI_OCEAN_REF_URL} attribution={ESRI_OCEAN_ATTRIBUTION}
+                       maxZoom={19} maxNativeZoom={13} />
+          </LayersControl.Overlay>
           <LayersControl.Overlay checked name="Seamarks (buoys, lights, marinas)">
             <TileLayer url={SEAMARK_TILE_URL} attribution={SEAMARK_ATTRIBUTION} maxZoom={18} opacity={0.9} />
           </LayersControl.Overlay>
           <LayersControl.Overlay name="NOAA Charts (US waters, with depth)">
             <TileLayer url={NOAA_TILE_URL} attribution={NOAA_ATTRIBUTION} maxZoom={18} opacity={0.85} />
-          </LayersControl.Overlay>
-          <LayersControl.Overlay name="Depth Contours (sparse, OpenSeaMap)">
-            <TileLayer url={DEPTH_TILE_URL} attribution={DEPTH_ATTRIBUTION} maxZoom={18} opacity={0.7} />
           </LayersControl.Overlay>
         </LayersControl>
 
@@ -277,6 +305,12 @@ function MapView() {
         <button className={`btn ${sharing ? 'btn-primary' : 'btn-secondary'} map-share-btn`}
                 onClick={toggleSharing}>
           {sharing ? '● Sharing position' : 'Share my position'}
+        </button>
+        <button className="btn btn-secondary map-share-btn"
+                onClick={recenterOnMe}
+                disabled={!position}
+                title={position ? 'Center map on my location' : 'Waiting for GPS fix'}>
+          Recenter
         </button>
       </div>
 
