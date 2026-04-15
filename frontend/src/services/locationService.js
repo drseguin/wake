@@ -4,10 +4,11 @@
  * @fileoverview Wraps navigator.geolocation.watchPosition once for the
  * whole app, and (when sharing is enabled) POSTs the latest position to
  * the backend every 30s. Components subscribe via subscribePosition() and
- * receive callbacks on every fresh fix.
+ * receive callbacks on every fresh fix. Sharing settings (on/off + the
+ * chosen audience) live here too.
  *
  * @author David Seguin
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026
  * @license Professional - All Rights Reserved
  */
@@ -17,13 +18,21 @@ import logger from '../utils/logger';
 
 const PUSH_INTERVAL_MS = 30_000;
 
+const DEFAULT_SHARE_STATE = {
+  enabled: false,
+  audience_mode: 'all',    // 'all' | 'crews' | 'marina'
+  audience_crew_ids: [],
+  duration_mode: 'indefinite', // 'indefinite' | 'hours' | 'until_move'
+  expires_at: null,
+};
+
 class LocationService {
   constructor() {
     this.position = null;        // { lat, lng, accuracy, heading, speed }
     this.error = null;
-    this.sharing = false;
+    this.shareState = { ...DEFAULT_SHARE_STATE };
     this.subscribers = new Set();
-    this.sharingSubscribers = new Set();
+    this.shareSubscribers = new Set();
     this.watchId = null;
     this.intervalId = null;
   }
@@ -59,46 +68,85 @@ class LocationService {
     return () => this.subscribers.delete(cb);
   }
 
-  /** Subscribe to changes in the sharing flag. Returns an unsubscribe fn. */
-  subscribeSharing(cb) {
-    this.sharingSubscribers.add(cb);
-    cb(this.sharing);
-    return () => this.sharingSubscribers.delete(cb);
+  /** Subscribe to sharing state changes. Callback receives the full share state. */
+  subscribeShare(cb) {
+    this.shareSubscribers.add(cb);
+    cb(this.shareState);
+    return () => this.shareSubscribers.delete(cb);
   }
 
   /** Pull the current sharing state from the backend on app load. */
   async hydrateSharing() {
     try {
       const me = await api.getMyLocation();
-      this._setSharingFlag(!!me.enabled);
+      this._setShareState(this._fromServer(me));
       if (me.enabled) this._startPushTimer();
     } catch (err) {
       logger.warn(`Could not hydrate location sharing: ${err.message}`);
     }
   }
 
-  /** Turn broadcasting on or off. */
-  async setSharing(enabled) {
-    if (this.sharing === enabled) return;
-    this._setSharingFlag(enabled);
-    if (enabled) {
-      this._startPushTimer();
-      await this._pushNow();
-    } else {
-      this._stopPushTimer();
-      try {
-        await api.putMyLocation({ enabled: false });
-      } catch (err) {
-        logger.warn(`Failed to clear sharing flag on backend: ${err.message}`);
+  /**
+   * Turn broadcasting on/off and/or change the audience/duration.
+   *
+   * @param {Object} next
+   * @param {boolean} next.enabled
+   * @param {'all'|'crews'|'marina'} [next.audience_mode]
+   * @param {string[]} [next.audience_crew_ids]
+   * @param {'indefinite'|'hours'|'until_move'} [next.duration_mode]
+   * @param {number} [next.duration_hours] - required when duration_mode='hours'
+   */
+  async updateSharing(next) {
+    const payload = {
+      enabled: !!next.enabled,
+      audience_mode: next.audience_mode || this.shareState.audience_mode,
+      audience_crew_ids: next.audience_crew_ids || this.shareState.audience_crew_ids,
+    };
+
+    if (next.duration_mode) {
+      payload.duration_mode = next.duration_mode;
+      if (next.duration_mode === 'hours') {
+        payload.duration_hours = Number(next.duration_hours);
       }
     }
+
+    // Include a current fix on enable so the backend has coords immediately
+    // (also needed to anchor 'until_move').
+    if (payload.enabled && this.position) {
+      payload.lat = this.position.lat;
+      payload.lng = this.position.lng;
+      payload.heading_deg = this.position.heading;
+      payload.speed_kts = this.position.speed != null
+        ? this.position.speed * 1.94384
+        : null;
+    }
+
+    const saved = await api.putMyLocation(payload);
+    this._setShareState(this._fromServer(saved));
+
+    if (saved.enabled) {
+      this._startPushTimer();
+    } else {
+      this._stopPushTimer();
+    }
+    return saved;
+  }
+
+  _fromServer(s) {
+    return {
+      enabled: !!s.enabled,
+      audience_mode: s.audience_mode || 'all',
+      audience_crew_ids: s.audience_crew_ids || [],
+      duration_mode: s.duration_mode || 'indefinite',
+      expires_at: s.expires_at || null,
+    };
   }
 
   // ----- internals -----
 
-  _setSharingFlag(v) {
-    this.sharing = v;
-    this.sharingSubscribers.forEach((cb) => cb(v));
+  _setShareState(next) {
+    this.shareState = { ...this.shareState, ...next };
+    this.shareSubscribers.forEach((cb) => cb(this.shareState));
   }
 
   _startPushTimer() {
@@ -114,15 +162,19 @@ class LocationService {
   }
 
   async _pushNow() {
-    if (!this.sharing || !this.position) return;
+    if (!this.shareState.enabled || !this.position) return;
     try {
-      await api.putMyLocation({
+      const saved = await api.putMyLocation({
         enabled: true,
         lat: this.position.lat,
         lng: this.position.lng,
         heading_deg: this.position.heading,
         speed_kts: this.position.speed != null ? this.position.speed * 1.94384 : null,
       });
+      // Server may have auto-disabled sharing (timer expired, or drifted
+      // past the 'until_move' anchor). Reflect that locally.
+      this._setShareState(this._fromServer(saved));
+      if (!saved.enabled) this._stopPushTimer();
     } catch (err) {
       logger.warn(`Location push failed: ${err.message}`);
     }

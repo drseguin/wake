@@ -23,4 +23,10 @@ from .marina import Marina  # noqa: E402,F401
 from .profile import Profile  # noqa: E402,F401
 from .crew import Crew, CrewMember, CrewInvitation, CrewMessage  # noqa: E402,F401
 from .waypoint import Waypoint, WaypointShare  # noqa: E402,F401
-from .location import LocationShare  # noqa: E402,F401
+from .location import (  # noqa: E402,F401
+    AUDIENCE_MODES,
+    DURATION_MODES,
+    UNTIL_MOVE_THRESHOLD_M,
+    LocationShare,
+    LocationShareCrew,
+)
