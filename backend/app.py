@@ -62,7 +62,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, supports_credentials=True, origins=['https://localhost'])
+    CORS(app, supports_credentials=True, origins=[Config.KEYCLOAK['app_url']])
 
     redis_client = redis.from_url(Config.REDIS_URL, decode_responses=True)
     kc = Config.KEYCLOAK

@@ -62,14 +62,19 @@ fi
 
 APP_NAME="${APP_NAME:-WAKE App}"
 APP_HOST="${APP_HOST:-localhost}"
-APP_PORT="${APP_PORT:-443}"
+
+if [[ -z "${APP_PORT}" ]]; then
+  echo "Error: APP_PORT is not set. Add APP_PORT=<port> to ${ENV_FILE}" >&2
+  exit 1
+fi
+if ! [[ "${APP_PORT}" =~ ^[0-9]+$ ]] || (( APP_PORT < 1 || APP_PORT > 65535 )); then
+  echo "Error: APP_PORT='${APP_PORT}' is not a valid port (1-65535)" >&2
+  exit 1
+fi
+
 export APP_NAME APP_HOST APP_PORT
 
-if [[ "$APP_PORT" == "443" ]]; then
-  APP_URL="https://${APP_HOST}"
-else
-  APP_URL="https://${APP_HOST}:${APP_PORT}"
-fi
+APP_URL="https://${APP_HOST}:${APP_PORT}"
 
 echo "========================================="
 echo "  ${APP_NAME} - Starting..."
@@ -84,13 +89,24 @@ echo "[1/6] Stopping existing containers..."
 docker compose down 2>/dev/null || true
 echo ""
 
-# Regenerate nginx.conf from the template so APP_HOST always matches .env
-echo "[2/6] Rendering nginx.conf from template..."
+# Regenerate config files from templates so they always match .env
+echo "[2/6] Rendering configs from templates..."
 if [[ -f nginx/nginx.conf.template ]]; then
   sed "s/{{APP_HOST}}/${APP_HOST}/g" nginx/nginx.conf.template > nginx/nginx.conf
-  echo "  nginx.conf rendered with APP_HOST=${APP_HOST}"
+  echo "  nginx/nginx.conf rendered with APP_HOST=${APP_HOST}"
 else
   echo "  nginx/nginx.conf.template not found; using existing nginx.conf"
+fi
+
+# Escape forward slashes in APP_URL for sed
+APP_URL_SED=$(printf '%s' "${APP_URL}" | sed 's/[\/&]/\\&/g')
+if [[ -f backend/keycloak.json.template ]]; then
+  sed "s/{{APP_URL}}/${APP_URL_SED}/g" backend/keycloak.json.template > backend/keycloak.json
+  echo "  backend/keycloak.json rendered with APP_URL=${APP_URL}"
+fi
+if [[ -f keycloak/realm-export.json.template ]]; then
+  sed "s/{{APP_URL}}/${APP_URL_SED}/g" keycloak/realm-export.json.template > keycloak/realm-export.json
+  echo "  keycloak/realm-export.json rendered with APP_URL=${APP_URL}"
 fi
 echo ""
 
