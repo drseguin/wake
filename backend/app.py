@@ -311,6 +311,7 @@ def create_app():
         session_data = {
             'access_token': tokens['access_token'],
             'refresh_token': tokens.get('refresh_token', ''),
+            'id_token': tokens.get('id_token', ''),
             'user_info': user_info,
             'created_at': datetime.now(timezone.utc).isoformat()
         }
@@ -389,6 +390,8 @@ def create_app():
         session['access_token'] = tokens['access_token']
         if tokens.get('refresh_token'):
             session['refresh_token'] = tokens['refresh_token']
+        if tokens.get('id_token'):
+            session['id_token'] = tokens['id_token']
 
         redis_client.setex(f'session:{token}', 28800, json.dumps(session))
         logger.debug(f'Refreshed session for {session["user_info"].get("username")}')
@@ -445,16 +448,29 @@ def create_app():
         if Config.SINGLE_USER_MODE:
             return jsonify({'logout_url': '/'})
 
+        id_token = ''
         token = request.cookies.get('auth_token')
         if token:
+            raw = redis_client.get(f'session:{token}')
+            if raw:
+                try:
+                    id_token = json.loads(raw).get('id_token', '') or ''
+                except (json.JSONDecodeError, TypeError):
+                    id_token = ''
             redis_client.delete(f'session:{token}')
             logger.info('Session invalidated')
 
+        # Keycloak 18+ requires id_token_hint for silent RP-initiated logout;
+        # without it the post_logout_redirect_uri is ignored and the user sees
+        # a confirmation page (or the redirect fails).
         logout_url = (
             f'{kc["public_url"]}/realms/{kc["realm"]}/protocol/openid-connect/logout'
             f'?post_logout_redirect_uri={kc["app_url"]}'
-            f'&client_id={kc["client_id"]}'
         )
+        if id_token:
+            logout_url += f'&id_token_hint={id_token}'
+        else:
+            logout_url += f'&client_id={kc["client_id"]}'
 
         response = make_response(jsonify({'logout_url': logout_url}))
         response.delete_cookie('auth_token', path='/')
