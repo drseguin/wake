@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is this project?
 
-WAKE App — a full-stack web application with React frontend, Flask backend, Keycloak SSO, Redis-backed sessions, and Dockerized infrastructure.
+WAKE — a marine/boating web app built on a reusable skeleton shell. The shell provides React frontend, Flask backend, Keycloak SSO, Redis sessions, and PostGIS persistence via SQLAlchemy + Alembic. Marine features: a Leaflet map with OSM/OpenSeaMap/NOAA chart + depth layers, user profiles (boat info), crews with invitations/members/chat, waypoints (owned + crew-shared), and live location sharing. A tile-cache service worker keeps previously-viewed map areas working offline.
 
 ## First Time Setup
 
@@ -34,32 +34,59 @@ docker logs wake-app-backend | grep 'DSC:'
 
 ```
 Browser → Nginx (:443 app, :8443 keycloak) → Frontend (React/Vite :80)
-                                           → Backend (Flask :5000) → Redis (sessions + prefs)
-                                           → Keycloak (:8080)       → PostgreSQL
+                                           → Backend (Flask :5000) → Redis        (sessions + prefs)
+                                           │                       → wake-db      (PostGIS: app data)
+                                           → Keycloak (:8080)      → keycloak-db  (PostgreSQL: auth data)
 ```
 
-- **Frontend:** React 18 + Vite, plain JavaScript (no TypeScript). Single CSS file (`App.css`) with CSS custom properties. `ThemeContext` for dark/light + accent colors; `AuthContext` for user + role helpers.
-- **Backend:** Python Flask with gunicorn. Redis-backed sessions. Auth via Keycloak OAuth2 + PKCE (or `SINGLE_USER_MODE` bypass). Role-gated endpoints use `@require_auth` / `@require_role` from `backend/utils/auth.py`.
+Seven Docker services: `nginx`, `frontend`, `backend`, `keycloak`, `keycloak-db`, `redis`, `wake-db` (PostGIS). All share the `wake-app-net` bridge network.
+
+- **Frontend:** React 18 + Vite, plain JavaScript (no TypeScript). Single CSS file (`App.css`) with CSS custom properties. React Router v6 for page routing. Leaflet + react-leaflet for the map. `ThemeContext` for dark/light + accent colors; `AuthContext` for user + role helpers. `App.jsx` exports `ToastContext` + `DialogContext` via `useToast()` / `useDialog()`.
+- **Backend:** Python Flask with gunicorn (2 workers). Feature routes live in `backend/blueprints/` and are registered by `backend/blueprints/__init__.py`. Redis-backed sessions. Auth via Keycloak OAuth2 + PKCE (or `SINGLE_USER_MODE` bypass). Role-gated endpoints use `@require_auth` / `@require_role` from `backend/utils/auth.py`.
+- **Database:** PostGIS (`wake-db`) for app data; SQLAlchemy 2.x (`backend/db.py`) with a request-scoped session. Alembic migrations live in `backend/migrations/versions/`; `backend/entrypoint.sh` runs `alembic upgrade head` before gunicorn starts on every backend boot.
 - **Nginx:** Reverse proxy with self-signed TLS. Routes `/api/` to backend, `/` to frontend, `:8443` to Keycloak. Config generated from `nginx/nginx.conf.template` on every `./start.sh`.
 - **Auth flow:** Frontend calls `/api/v1/auth/login` → backend generates PKCE challenge + state, stores in Redis, returns Keycloak auth URL → browser redirects to Keycloak → callback at `/api/v1/auth/callback` exchanges code for tokens → session stored in Redis → HTTPOnly cookie set. Access-token expiry is handled automatically via `POST /api/v1/auth/refresh` + single-flight retry in `services/api.js`.
+- **Map tiles:** Four layers wired in `MapView.jsx` — OSM base, OpenSeaMap seamarks overlay, NOAA raster charts (US waters), OpenSeaMap depth overlay (sparse). `frontend/public/sw-tiles.js` is a service worker that caches tile responses (stale-while-revalidate) for known tile hosts so previously-viewed areas keep working offline.
 
 ### Key Files
 
-- `frontend/src/App.jsx` — Root component: shell layout, ToastContext, DialogContext, auth state, nav fall-through to NotFound
-- `frontend/src/main.jsx` — Entry point; wraps App in `ErrorBoundary` + `ThemeProvider`
+Frontend shell:
+- `frontend/src/App.jsx` — Root: shell layout, routes, ToastContext + DialogContext, auth bootstrap
+- `frontend/src/main.jsx` — Entry point; wraps App in `ErrorBoundary` + `ThemeProvider` + `BrowserRouter`
 - `frontend/src/contexts/AuthContext.jsx` — `useAuth()` with `{ user, adminRole, isAdmin, hasRole }`
 - `frontend/src/contexts/ThemeContext.jsx` — Theme + accent color state; persists via localStorage
 - `frontend/src/components/Protected.jsx` — Role-gated route wrapper (pairs with backend `@require_role`)
 - `frontend/src/components/ErrorBoundary.jsx` — Crash catcher with dev-only stack trace
-- `frontend/src/components/{Tooltip,FormField,EmptyState}.jsx` — UI primitives
-- `frontend/src/pages/NotFound.jsx` — 404 panel
+- `frontend/src/components/{Tooltip,FormField,EmptyState,Dialog,Toast}.jsx` — UI primitives
 - `frontend/src/services/api.js` — Centralized fetch wrapper with 401→refresh retry + X-Request-ID logging
 - `frontend/src/utils/logger.js` — Level-aware logger (syncs to backend `LOG_LEVEL`)
-- `backend/app.py` — Flask app factory; endpoints under `/api/v1/*`
-- `backend/utils/auth.py` — `@require_auth`, `@require_role` decorators
+
+Frontend marine features:
+- `frontend/src/pages/Map.jsx` + `components/MapView.jsx` — Leaflet map, tile layers, waypoint markers, crew positions, right-click to drop waypoint
+- `frontend/src/pages/Profile.jsx` — Boat + user profile form
+- `frontend/src/pages/Crews.jsx` + `CrewDetail.jsx` + `components/CrewChat.jsx` — Crew list, detail view with members/invites, chat thread
+- `frontend/src/pages/Waypoints.jsx` + `components/WaypointDialog.jsx` — Waypoint list + create/edit dialog
+- `frontend/src/pages/Marinas.jsx` — Marinas directory
+- `frontend/src/services/locationService.js` — Browser geolocation watcher + backend push for live sharing
+- `frontend/src/components/PreferencesSync.jsx` — Two-way sync of prefs between Redis and frontend contexts
+- `frontend/public/sw-tiles.js` — Service worker that caches map tile responses for offline use
+
+Backend:
+- `backend/app.py` — Flask app factory; auth + config + preferences endpoints
+- `backend/blueprints/` — Feature routes: `profile.py`, `marinas.py`, `users.py`, `crews.py`, `waypoints.py`, `location.py` (registered in `blueprints/__init__.py`)
+- `backend/models/` — SQLAlchemy models: `Marina`, `Profile`, `Crew` + `CrewMember` + `CrewInvitation` + `CrewMessage`, `Waypoint` + `WaypointShare`, `LocationShare`. All inherit the `Base` exported from `models/__init__.py`.
+- `backend/db.py` — SQLAlchemy engine, scoped session, per-request teardown
+- `backend/migrations/` — Alembic env + `versions/` (the one baseline migration is `0001_initial.py`)
+- `backend/entrypoint.sh` — Runs `alembic upgrade head` then `gunicorn`
+- `backend/utils/auth.py` — `@require_auth`, `@require_role` decorators; populates `g.user`
+- `backend/utils/geo.py` — Geospatial helpers (PostGIS-aware distance / bounding box)
 - `backend/utils/logger.py` — Unified logger with request-id filter
 - `backend/keycloak.json` — Keycloak connection config incl. `single_user_mode` and `admin_role`
-- `docker-compose.yml` — 6 services with healthchecks (nginx, frontend, backend, keycloak, keycloak-db, redis)
+
+Infra:
+- `docker-compose.yml` — 7 services with healthchecks
+- `start.sh` — Stops/builds/starts everything and waits for each service's healthcheck
+- `nginx/nginx.conf.template` — Source of truth for nginx config (see gotcha below)
 
 ## API Endpoints
 
@@ -80,6 +107,16 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 - `GET /api/v1/user/preferences` — returns stored prefs object
 - `PUT /api/v1/user/preferences` — merges body into stored prefs (partial update OK)
 
+**Marine features (all auth required, all under `/api/v1/`):**
+- `profile.py` — GET/PUT current user's boat+profile; GET profile by username
+- `users.py` — user lookup / search (for invites)
+- `marinas.py` — marina directory + geospatial lookup
+- `crews.py` — crews CRUD, invitations (send/accept/decline), member management (leave/remove), chat messages
+- `waypoints.py` — waypoints CRUD + shares to specific crews
+- `location.py` — live location broadcast + fetching crew member positions
+
+Inspect the blueprint files directly for the exact route shapes — they are the source of truth.
+
 ## Conventions
 
 - **Logger prefix:** `DSC:` — all logging uses the unified logger (`frontend/src/utils/logger.js`, `backend/utils/logger.py`). Never use raw `console.log` or `print`. Pre-commit hook enforces this after `./scripts/install-hooks.sh`.
@@ -91,6 +128,10 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 - **JSDoc:** Every source file needs a file header (`@fileoverview`, `@author David Seguin`, `@version`, `@since`, `@license`). All exported functions need JSDoc. Pre-commit hook flags new files missing `@fileoverview`.
 - **No TypeScript:** Plain JavaScript with JSDoc type annotations.
 - **API routes:** All under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin via nginx proxy).
+- **DB access:** Use `from db import SessionLocal` inside request handlers — `SessionLocal()` gets a session bound to the request scope (teardown closes it). Do not open raw connections. Use SQLAlchemy 2.x style (`select(...)`, `session.execute(...)`) — examples in `blueprints/crews.py`.
+- **Schema changes:** Edit/add a model in `backend/models/`, then create an Alembic revision (`alembic revision --autogenerate -m "..."`) inside the backend container. Migrations run automatically on the next backend start via `entrypoint.sh`.
+- **Identity key:** Most app tables key on `username` (the Keycloak `preferred_username`), not a numeric user id. `g.user['username']` is the canonical reference inside handlers.
+- **Map tiles:** The four tile URLs + attributions are constants at the top of `MapView.jsx`. If you add a new tile host, also add it to the `TILE_HOSTS` allow-list in `frontend/public/sw-tiles.js` or the SW will skip caching it.
 
 ## Common Issues & Quick Fixes
 
@@ -104,6 +145,8 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 
 **`console.log` / `print` got committed.** Install the pre-commit hook: `./scripts/install-hooks.sh`.
 
+**Backend crashes on boot / migration error.** `docker logs wake-app-backend` — the Alembic upgrade runs before gunicorn, so a failed migration stops startup. Fix the migration (or drop the offending revision in `backend/migrations/versions/`) and restart. To wipe app data entirely: `./stop.sh --reset` (also removes the `wake-db-data` volume) then `./start.sh`.
+
 ## Key Gotchas
 
 - **`nginx/nginx.conf` is generated.** Do not edit it — `./start.sh` overwrites it from `nginx/nginx.conf.template` every run. Edit the template instead.
@@ -111,7 +154,10 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 - **Internal vs public Keycloak URLs.** Backend uses `http://keycloak:8080` (internal, server-to-server) for token exchange; browser redirects use `https://localhost:8443`. Both are in `backend/keycloak.json`; change both if you change the public host.
 - **Containerized-only dev.** There is no local `npm run dev` / Flask dev-server workflow — everything runs in Docker. Hot reload is not configured.
 - **`backend/version.json` is auto-managed.** `./start.sh` rewrites it every launch. Do not commit manual edits.
-- **Redis = sessions + prefs.** Wiping Redis logs everyone out and resets all saved preferences. `./stop.sh --reset` also removes the `keycloak-db` volume, so users and realm config reset too.
+- **Redis = sessions + prefs.** Wiping Redis logs everyone out and resets all saved preferences. `./stop.sh --reset` also removes the `keycloak-db` and `wake-db-data` volumes, so Keycloak users, realm config, **and all marine app data** reset too.
+- **Migrations run at backend start.** `entrypoint.sh` runs `alembic upgrade head` before gunicorn. A broken migration prevents the backend from coming up; `./start.sh` will time out waiting for its healthcheck.
+- **`username` is the user PK across tables.** Changing a Keycloak username orphans that user's profile, crew memberships, waypoints, etc. There is no migration path for rename today.
+- **Geolocation requires HTTPS.** `locationService.js` needs `navigator.geolocation`, which browsers only expose on secure origins — this is why the dev setup uses self-signed TLS even locally.
 
 ## Documentation
 
