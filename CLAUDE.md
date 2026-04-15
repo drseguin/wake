@@ -20,7 +20,8 @@ WAKE App — a full-stack web application with React frontend, Flask backend, Ke
 ./start.sh                       # default env; waits for healthchecks
 ./start.sh --env local           # load .env.local
 ./start.sh logs                  # start, then tail compose logs
-./stop.sh                        # stop + remove volumes (wipes Keycloak DB)
+./stop.sh                        # stop containers (preserves Keycloak users + sessions)
+./stop.sh --reset                # stop + wipe volumes (Keycloak DB + Redis)
 ./scripts/install-hooks.sh       # installs pre-commit unified-logger check
 
 curl -k https://localhost/api/v1/health
@@ -93,7 +94,7 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 
 ## Common Issues & Quick Fixes
 
-**Keycloak admin UI won't log in / realm missing.** Realm import runs only on first boot with an empty DB. Run `./stop.sh` (wipes volumes) then `./start.sh`.
+**Keycloak admin UI won't log in / realm missing.** Realm import runs only on first boot with an empty DB. Run `./stop.sh --reset` (wipes volumes) then `./start.sh`.
 
 **Backend logs show repeated 401s after login.** The frontend interceptor will attempt a single refresh per request; if that also fails, the session is gone — re-login. Check that `backend/keycloak.json` `public_url` matches the Keycloak host the browser was redirected to.
 
@@ -110,7 +111,7 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 - **Internal vs public Keycloak URLs.** Backend uses `http://keycloak:8080` (internal, server-to-server) for token exchange; browser redirects use `https://localhost:8443`. Both are in `backend/keycloak.json`; change both if you change the public host.
 - **Containerized-only dev.** There is no local `npm run dev` / Flask dev-server workflow — everything runs in Docker. Hot reload is not configured.
 - **`backend/version.json` is auto-managed.** `./start.sh` rewrites it every launch. Do not commit manual edits.
-- **Redis = sessions + prefs.** Wiping Redis logs everyone out and resets all saved preferences. `./stop.sh` also removes the `keycloak-db` volume, so realm config resets too.
+- **Redis = sessions + prefs.** Wiping Redis logs everyone out and resets all saved preferences. `./stop.sh --reset` also removes the `keycloak-db` volume, so users and realm config reset too.
 
 ## Documentation
 
