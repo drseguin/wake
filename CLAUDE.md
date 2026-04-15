@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is this project?
 
-WAKE App is a skeleton/template application that serves as the starting point for all future applications. It provides a complete UI shell, theming system, authentication flow, and Docker infrastructure. It has no app-specific functionality. See `documentation/USE_BASELINE_APP.md` for the clone-rename-reuse workflow.
+WAKE App — a full-stack web application with React frontend, Flask backend, Keycloak SSO, Redis-backed sessions, and Dockerized infrastructure.
 
 ## First Time Setup
 
@@ -21,7 +21,6 @@ WAKE App is a skeleton/template application that serves as the starting point fo
 ./start.sh --env local           # load .env.local
 ./start.sh logs                  # start, then tail compose logs
 ./stop.sh                        # stop + remove volumes (wipes Keycloak DB)
-./scripts/rename-app.sh "ACME App" "acme-app"
 ./scripts/install-hooks.sh       # installs pre-commit unified-logger check
 
 curl -k https://localhost/api/v1/health
@@ -104,8 +103,6 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 
 **`console.log` / `print` got committed.** Install the pre-commit hook: `./scripts/install-hooks.sh`.
 
-**rename-app.sh output lost the new secrets.** The banner at the end prints `FLASK_SECRET_KEY` and the Keycloak client secret exactly once. If you missed them, open `.env` and `backend/keycloak.json` — the values are there.
-
 ## Key Gotchas
 
 - **`nginx/nginx.conf` is generated.** Do not edit it — `./start.sh` overwrites it from `nginx/nginx.conf.template` every run. Edit the template instead.
@@ -117,7 +114,6 @@ All routes live under `/api/v1/`. Frontend uses empty `BASE_URL` (same-origin vi
 
 ## Documentation
 
-- `documentation/USE_BASELINE_APP.md` — How to clone this baseline into a new app (rename script usage, git remote setup, secret rotation)
 - `documentation/STYLE_GUIDE.md` — Complete design spec (colors, typography, components, CSS variables)
 - `documentation/APP_DEVELOPMENT_RULES.md` — Coding standards, JSDoc templates, UI/UX standards, quality gates
 - `documentation/KEYCLOAK_SSO.md` — Keycloak setup and user/role administration

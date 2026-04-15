@@ -1,5 +1,5 @@
 """
-Unified Logger for Base App Backend
+Unified Logger for WAKE App Backend
 
 @fileoverview Provides a configured logger instance with the DSC: prefix
 for all backend logging. All modules must use this logger instead of
@@ -57,7 +57,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 handler.addFilter(_RequestIdFilter())
 
-logger = logging.getLogger('base-app')
+logger = logging.getLogger('wake')
 logger.setLevel(getattr(logging, LOG_LEVEL, logging.DEBUG))
 logger.addHandler(handler)
 logger.propagate = False
