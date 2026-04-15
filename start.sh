@@ -110,7 +110,7 @@ echo ""
 
 echo "[6/6] Waiting for services to become healthy..."
 HEALTH_TIMEOUT=180
-HEALTH_SERVICES=(redis keycloak-db backend frontend)
+HEALTH_SERVICES=(redis keycloak-db wake-db backend frontend)
 
 wait_for_health() {
   local svc="$1" elapsed=0

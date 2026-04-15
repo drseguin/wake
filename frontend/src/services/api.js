@@ -118,6 +118,25 @@ const api = {
     method: 'PUT',
     body: JSON.stringify(prefs),
   }),
+
+  // ----- Profile -----
+  getProfile: () => apiRequest('/api/v1/profile'),
+  saveProfile: (patch) => apiRequest('/api/v1/profile', {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  }),
+
+  // ----- Marinas -----
+  listMarinas: () => apiRequest('/api/v1/marinas'),
+  createMarina: (m) => apiRequest('/api/v1/marinas', {
+    method: 'POST',
+    body: JSON.stringify(m),
+  }),
+  updateMarina: (id, m) => apiRequest(`/api/v1/marinas/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(m),
+  }),
+  deleteMarina: (id) => apiRequest(`/api/v1/marinas/${id}`, { method: 'DELETE' }),
 };
 
 export default api;

@@ -32,14 +32,17 @@
  */
 
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import LeftPanel from './components/LeftPanel';
-import Dashboard from './components/Dashboard';
 import Toast from './components/Toast';
 import Dialog from './components/Dialog';
 import Settings from './components/Settings';
 import PreferencesSync from './components/PreferencesSync';
 import NotFound from './pages/NotFound';
+import MapPage from './pages/Map';
+import Profile from './pages/Profile';
+import Marinas from './pages/Marinas';
 import { AuthProvider } from './contexts/AuthContext';
 import api from './services/api';
 import logger from './utils/logger';
@@ -73,7 +76,7 @@ function App() {
     () => localStorage.getItem('panelOpen') !== 'false'
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const navigate = useNavigate();
 
   // Toast state
   const [toast, setToast] = useState(null);
@@ -243,21 +246,19 @@ function App() {
           onOpenSettings={() => setSettingsOpen(true)}
         />
 
-        <LeftPanel
-          open={panelOpen}
-          activeNav={activeNav}
-          onNavChange={setActiveNav}
-        />
+        <LeftPanel open={panelOpen} />
 
         <main
           className="main-content"
           style={{ marginLeft: panelOpen ? (parseInt(localStorage.getItem('leftPanelWidth')) || 280) : 0 }}
         >
-          {activeNav === 'dashboard' ? (
-            <Dashboard showToast={showToast} appName={appName} />
-          ) : (
-            <NotFound onHome={() => setActiveNav('dashboard')} />
-          )}
+          <Routes>
+            <Route path="/" element={<MapPage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/marinas" element={<Marinas />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound onHome={() => navigate('/')} />} />
+          </Routes>
         </main>
 
         {settingsOpen && (

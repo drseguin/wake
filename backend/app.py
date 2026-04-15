@@ -49,6 +49,8 @@ from flask_cors import CORS
 from config import Config
 from utils.logger import logger
 from utils.auth import require_auth
+import db as db_module
+from blueprints import register_blueprints
 
 
 def create_app():
@@ -67,6 +69,9 @@ def create_app():
 
     logger.info(f'Starting {Config.APP_NAME} backend')
     logger.info(f'SINGLE_USER_MODE: {Config.SINGLE_USER_MODE}')
+
+    db_module.init_app(app)
+    register_blueprints(app)
 
     # ------------------------------------------------------------------ #
     # Request ID Propagation

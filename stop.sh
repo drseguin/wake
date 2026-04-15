@@ -1,7 +1,7 @@
 #!/bin/bash
 # Stop Script
-# Stops containers. Preserves volumes (Keycloak users, Redis sessions) by default.
-# Pass --reset (or -r) to also remove volumes — wipes the Keycloak DB and Redis.
+# Stops containers. Preserves volumes (Keycloak users, Redis sessions, WAKE DB) by default.
+# Pass --reset (or -r) to also remove volumes — wipes the Keycloak DB, Redis, and WAKE DB.
 
 set -e
 
@@ -25,7 +25,7 @@ echo "========================================="
 echo ""
 
 if [ "$RESET" -eq 1 ]; then
-  echo "Reset mode: removing volumes (Keycloak users + Redis sessions will be wiped)."
+  echo "Reset mode: removing volumes (Keycloak users, Redis sessions, and WAKE DB will be wiped)."
   docker compose down -v 2>/dev/null || true
 else
   docker compose down 2>/dev/null || true

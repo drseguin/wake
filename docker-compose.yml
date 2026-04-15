@@ -39,16 +39,19 @@ services:
       - APP_NAME=${APP_NAME:-WAKE App}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
       - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql+psycopg://wake:${WAKE_DB_PASSWORD:-wake}@wake-db:5432/wake
       - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
     depends_on:
       redis:
+        condition: service_healthy
+      wake-db:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/api/v1/health', timeout=2).status==200 else 1)\""]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 8
+      start_period: 30s
     networks:
       - wake-app-net
     restart: unless-stopped
@@ -115,8 +118,27 @@ services:
       - wake-app-net
     restart: unless-stopped
 
+  wake-db:
+    image: postgis/postgis:16-3.4
+    container_name: wake-app-wake-db
+    environment:
+      - POSTGRES_DB=wake
+      - POSTGRES_USER=wake
+      - POSTGRES_PASSWORD=${WAKE_DB_PASSWORD:-wake}
+    volumes:
+      - wake-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wake -d wake"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - wake-app-net
+    restart: unless-stopped
+
 volumes:
   keycloak-db-data:
+  wake-db-data:
 
 networks:
   wake-app-net:
