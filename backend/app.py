@@ -1,5 +1,5 @@
 """
-Base App Backend - Flask Application
+WAKE App Backend - Flask Application
 
 @fileoverview Main Flask application providing authentication endpoints
 (Keycloak SSO with PKCE), health checks, and configuration API. Supports

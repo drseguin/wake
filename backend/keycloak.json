@@ -3,8 +3,8 @@
   "server_url": "http://keycloak:8080",
   "public_url": "https://localhost:8443",
   "app_url": "https://localhost",
-  "realm": "base-app",
-  "client_id": "base-app-client",
-  "client_secret": "base-app-secret",
-  "admin_role": "base-app-admin"
+  "realm": "wake-app",
+  "client_id": "wake-app-client",
+  "client_secret": "13bbada741dfe999c63cfc8bf7b4f4ebae5ed4c51c7083288a52391561cfef4a",
+  "admin_role": "wake-app-admin"
 }

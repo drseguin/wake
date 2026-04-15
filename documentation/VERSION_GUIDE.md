@@ -2,7 +2,7 @@
 
 ## Overview
 
-Base App uses an automatic date-based versioning system. A new version string is generated every time `./start.sh` is executed. The version is displayed in the user menu dropdown beneath "Logout".
+WAKE App uses an automatic date-based versioning system. A new version string is generated every time `./start.sh` is executed. The version is displayed in the user menu dropdown beneath "Logout".
 
 ## Version Format
 

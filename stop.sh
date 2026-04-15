@@ -5,7 +5,7 @@
 set -e
 
 # Load app name from .env or fall back to default
-APP_NAME="${APP_NAME:-Base App}"
+APP_NAME="${APP_NAME:-WAKE App}"
 if [ -f .env ]; then
   _name=$(grep -E '^APP_NAME=' .env | cut -d'=' -f2-)
   [ -n "$_name" ] && APP_NAME="$_name"

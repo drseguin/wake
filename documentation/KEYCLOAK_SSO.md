@@ -1,6 +1,6 @@
 # Keycloak SSO Administration Guide
 
-This guide explains how to set up and manage Keycloak Single Sign-On (SSO) for applications built from the Base App template.
+This guide explains how to set up and manage Keycloak Single Sign-On (SSO) for applications built from the WAKE App template.
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ This guide explains how to set up and manage Keycloak Single Sign-On (SSO) for a
 
 ## Overview
 
-Applications built from the Base App template use Keycloak for Single Sign-On (SSO) authentication. Keycloak provides:
+Applications built from the WAKE App template use Keycloak for Single Sign-On (SSO) authentication. Keycloak provides:
 
 - **Centralized User Management** - Create, manage, and delete users in one place
 - **Role-Based Access Control** - Assign roles to control access to admin features
@@ -69,7 +69,7 @@ User Browser
    This automatically:
    - Starts the Keycloak server with PostgreSQL
    - Imports the pre-configured realm from `keycloak/realm-export.json`
-   - Creates the `base-app` realm with client, roles, and a test user
+   - Creates the `wake-app` realm with client, roles, and a test user
 
 2. **Accept the self-signed certificate:**
    - Open `https://localhost:8443` in your browser
@@ -79,7 +79,7 @@ User Browser
 3. **Access Keycloak Admin Console:**
    - Navigate to `https://localhost:8443/admin`
    - Log in with username: `admin`, password: `admin`
-   - Select the **base-app** realm from the dropdown in the top-left corner
+   - Select the **wake-app** realm from the dropdown in the top-left corner
 
 4. **Verify SSO is enabled:**
    - SSO is enabled by default. Check `backend/keycloak.json` has `"single_user_mode": false`
@@ -91,11 +91,11 @@ The realm import automatically creates:
 
 | Item | Value |
 |------|-------|
-| Realm | `base-app` |
-| Client ID | `base-app-client` |
-| Client Secret | `base-app-secret` |
-| User Role | `base-app-user` (assigned to all new users by default) |
-| Admin Role | `base-app-admin` |
+| Realm | `wake-app` |
+| Client ID | `wake-app-client` |
+| Client Secret | `wake-app-secret` |
+| User Role | `wake-app-user` (assigned to all new users by default) |
+| Admin Role | `wake-app-admin` |
 | Test User | Username: `admin`, Password: `admin` (has admin role) |
 
 ### Changing Default Passwords (Production)
@@ -107,7 +107,7 @@ The realm import automatically creates:
    - Or change it via Keycloak Admin Console → Users → admin → Credentials
 
 2. **Client Secret:**
-   - Keycloak Admin → Clients → `base-app-client` → Credentials → Regenerate secret
+   - Keycloak Admin → Clients → `wake-app-client` → Credentials → Regenerate secret
    - Update the new secret in `backend/keycloak.json` (`client_secret` field)
 
 3. **Database Passwords:**
@@ -139,9 +139,9 @@ https://localhost:8443/admin
 1. Navigate to `https://localhost:8443/admin`
 2. Accept the self-signed certificate warning
 3. Enter username: `admin`, password: `admin`
-4. Select the **base-app** realm from the dropdown in the top-left corner
+4. Select the **wake-app** realm from the dropdown in the top-left corner
 
-> **Important:** Always ensure you are in the `base-app` realm (not `master`) when managing application users.
+> **Important:** Always ensure you are in the `wake-app` realm (not `master`) when managing application users.
 
 ---
 
@@ -149,7 +149,7 @@ https://localhost:8443/admin
 
 ### Creating Users
 
-1. In Keycloak Admin Console, select **base-app** realm
+1. In Keycloak Admin Console, select **wake-app** realm
 2. Navigate to **Users** in the left sidebar
 3. Click **Create new user** (or **Add user**)
 4. Fill in the required fields:
@@ -203,16 +203,16 @@ After creating the user:
 
 ### Available Roles
 
-The Base App uses two realm roles:
+The WAKE App uses two realm roles:
 
 | Role | Description |
 |------|-------------|
-| `base-app-user` | Default role for all users. Grants standard application access. |
-| `base-app-admin` | Administrator role. Grants access to admin features and user management. |
+| `wake-app-user` | Default role for all users. Grants standard application access. |
+| `wake-app-admin` | Administrator role. Grants access to admin features and user management. |
 
 ### Admin Capabilities
 
-Users with `base-app-admin` role can:
+Users with `wake-app-admin` role can:
 
 - Access the **Administration** panel in Settings
 - View and manage all users' data (not just their own)
@@ -227,7 +227,7 @@ Users with `base-app-admin` role can:
 2. Go to **Role mapping** tab
 3. Click **Assign role**
 4. **Important:** Change filter from "Filter by clients" to **"Filter by realm roles"**
-5. Check the box next to **base-app-admin**
+5. Check the box next to **wake-app-admin**
 6. Click **Assign**
 
 #### Via Command Line
@@ -240,16 +240,16 @@ TOKEN=$(curl -s -k -X POST "https://localhost:8443/realms/master/protocol/openid
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 # Get user ID (replace USERNAME with actual username)
-USER_ID=$(curl -s -k "https://localhost:8443/admin/realms/base-app/users?username=USERNAME" \
+USER_ID=$(curl -s -k "https://localhost:8443/admin/realms/wake-app/users?username=USERNAME" \
   -H "Authorization: Bearer $TOKEN" \
   | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['id'])")
 
 # Get role ID
-ROLE=$(curl -s -k "https://localhost:8443/admin/realms/base-app/roles/base-app-admin" \
+ROLE=$(curl -s -k "https://localhost:8443/admin/realms/wake-app/roles/wake-app-admin" \
   -H "Authorization: Bearer $TOKEN")
 
 # Assign role to user
-curl -s -k -X POST "https://localhost:8443/admin/realms/base-app/users/$USER_ID/role-mappings/realm" \
+curl -s -k -X POST "https://localhost:8443/admin/realms/wake-app/users/$USER_ID/role-mappings/realm" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "[$ROLE]"
@@ -283,7 +283,7 @@ echo "Admin role assigned successfully"
                 │
                 ▼
 4. Browser redirects to Keycloak login page
-   https://localhost:8443/realms/base-app/protocol/openid-connect/auth
+   https://localhost:8443/realms/wake-app/protocol/openid-connect/auth
                 │
                 ▼
 5. User enters credentials in Keycloak
@@ -318,7 +318,7 @@ echo "Admin role assigned successfully"
                 │
                 ▼
 4. Browser redirects to Keycloak logout
-   https://localhost:8443/realms/base-app/protocol/openid-connect/logout
+   https://localhost:8443/realms/wake-app/protocol/openid-connect/logout
                 │
                 ▼
 5. Keycloak ends SSO session
@@ -349,10 +349,10 @@ All Keycloak and authentication settings are centralized in `backend/keycloak.js
   "server_url": "http://keycloak:8080",
   "public_url": "https://localhost:8443",
   "app_url": "https://localhost",
-  "realm": "base-app",
-  "client_id": "base-app-client",
-  "client_secret": "base-app-secret",
-  "admin_role": "base-app-admin"
+  "realm": "wake-app",
+  "client_id": "wake-app-client",
+  "client_secret": "wake-app-secret",
+  "admin_role": "wake-app-admin"
 }
 ```
 
@@ -390,14 +390,14 @@ keycloak:
 
 ## Customizing for Your App
 
-When building a new app from the Base App template, update these Keycloak-related files:
+When building a new app from the WAKE App template, update these Keycloak-related files:
 
 ### 1. Realm Export (`keycloak/realm-export.json`)
 
-- Change `"realm": "base-app"` to your app name (e.g., `"my-app"`)
-- Change `"clientId": "base-app-client"` to match (e.g., `"my-app-client"`)
+- Change `"realm": "wake-app"` to your app name (e.g., `"my-app"`)
+- Change `"clientId": "wake-app-client"` to match (e.g., `"my-app-client"`)
 - Change `"secret"` to a new secure value
-- Update role names (`base-app-user` → `my-app-user`, `base-app-admin` → `my-app-admin`)
+- Update role names (`wake-app-user` → `my-app-user`, `wake-app-admin` → `my-app-admin`)
 - Update redirect URIs if your app URL changes
 - Change or remove the test user
 
@@ -408,8 +408,8 @@ When building a new app from the Base App template, update these Keycloak-relate
 
 ### 3. Frontend Role Check
 
-- In `UserMenu.jsx`, update `'base-app-admin'` to your admin role name
-- Search the codebase for `base-app-admin` and update all references
+- In `UserMenu.jsx`, update `'wake-app-admin'` to your admin role name
+- Search the codebase for `wake-app-admin` and update all references
 
 ### 4. Run `./stop.sh` then `./start.sh`
 
@@ -424,7 +424,7 @@ The realm is only imported on first boot. You must wipe volumes to re-import.
 **Cause:** The redirect URI doesn't match Keycloak's allowed URIs.
 
 **Solution:**
-1. Go to Keycloak Admin → **Clients** → **base-app-client**
+1. Go to Keycloak Admin → **Clients** → **wake-app-client**
 2. Check **Valid redirect URIs** includes:
    - `https://localhost/api/v1/auth/callback`
    - `https://localhost/*`
@@ -465,7 +465,7 @@ The realm is only imported on first boot. You must wipe volumes to re-import.
 
 **Check logs:**
 ```bash
-docker logs base-app-keycloak
+docker logs wake-app-keycloak
 ```
 
 **Common issues:**
@@ -475,10 +475,10 @@ docker logs base-app-keycloak
 
 ### User Can't See Admin Features
 
-**Cause:** User doesn't have `base-app-admin` role.
+**Cause:** User doesn't have `wake-app-admin` role.
 
 **Solution:**
-1. Assign `base-app-admin` role (see [Assigning Admin Role](#assigning-admin-role))
+1. Assign `wake-app-admin` role (see [Assigning Admin Role](#assigning-admin-role))
 2. User must **log out and log back in** for role changes to take effect
 
 ### Realm Not Imported
@@ -503,14 +503,14 @@ TOKEN=$(curl -s -k -X POST "https://localhost:8443/realms/master/protocol/openid
   -d "username=admin&password=admin&grant_type=password&client_id=admin-cli" \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
-curl -s -k "https://localhost:8443/admin/realms/base-app/users" \
+curl -s -k "https://localhost:8443/admin/realms/wake-app/users" \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 ```
 
 ### Create User via CLI
 
 ```bash
-curl -s -k -X POST "https://localhost:8443/admin/realms/base-app/users" \
+curl -s -k -X POST "https://localhost:8443/admin/realms/wake-app/users" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -556,10 +556,10 @@ curl -s -k "https://localhost:8443/health" | python3 -m json.tool
 | Access Keycloak Admin | https://localhost:8443/admin |
 | Create User | Users → Create new user |
 | Set Password | Users → [user] → Credentials → Set password |
-| Assign Admin Role | Users → [user] → Role mapping → Assign role → base-app-admin |
+| Assign Admin Role | Users → [user] → Role mapping → Assign role → wake-app-admin |
 | View Sessions | Sessions (left menu) |
 | View Login Events | Events → Login events |
-| Client Settings | Clients → base-app-client |
+| Client Settings | Clients → wake-app-client |
 | Realm Settings | Realm Settings |
 | App Keycloak Config | `backend/keycloak.json` |
 | Realm Import File | `keycloak/realm-export.json` |

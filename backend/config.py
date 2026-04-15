@@ -1,5 +1,5 @@
 """
-Configuration Manager for Base App Backend
+Configuration Manager for WAKE App Backend
 
 @fileoverview Loads application configuration from environment variables
 and the keycloak.json file. Provides a centralized Config object used
@@ -50,7 +50,7 @@ def _load_keycloak_config():
 class Config:
     """Application configuration loaded from environment and config files."""
 
-    APP_NAME = os.environ.get('APP_NAME', 'Base App')
+    APP_NAME = os.environ.get('APP_NAME', 'WAKE App')
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG').upper()

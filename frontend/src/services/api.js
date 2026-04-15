@@ -1,5 +1,5 @@
 /**
- * API Service for Base App Frontend
+ * API Service for WAKE App Frontend
  *
  * @fileoverview Centralized HTTP client for all backend API calls.
  * Uses fetch with credentials: 'include' for cookie-based auth.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is this project?
 
-Base App is a skeleton/template application that serves as the starting point for all future applications. It provides a complete UI shell, theming system, authentication flow, and Docker infrastructure. It has no app-specific functionality. See `documentation/USE_BASELINE_APP.md` for the clone-rename-reuse workflow.
+WAKE App is a skeleton/template application that serves as the starting point for all future applications. It provides a complete UI shell, theming system, authentication flow, and Docker infrastructure. It has no app-specific functionality. See `documentation/USE_BASELINE_APP.md` for the clone-rename-reuse workflow.
 
 ## First Time Setup
 
@@ -27,7 +27,7 @@ Base App is a skeleton/template application that serves as the starting point fo
 curl -k https://localhost/api/v1/health
 curl -k https://localhost/api/v1/config
 docker compose ps
-docker logs base-app-backend | grep 'DSC:'
+docker logs wake-app-backend | grep 'DSC:'
 ```
 
 ## Architecture

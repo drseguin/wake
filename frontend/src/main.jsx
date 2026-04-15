@@ -1,5 +1,5 @@
 /**
- * Base App Entry Point
+ * WAKE App Entry Point
  *
  * @fileoverview Renders the root React application wrapped in the
  * ThemeProvider context for global theme and accent color management.

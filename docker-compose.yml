@@ -4,7 +4,7 @@ services:
       context: ./nginx
       args:
         APP_HOST: ${APP_HOST:-localhost}
-    container_name: base-app-nginx
+    container_name: wake-app-nginx
     ports:
       - "443:443"
       - "8443:8443"
@@ -16,12 +16,12 @@ services:
       keycloak:
         condition: service_started
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
   frontend:
     build: ./frontend
-    container_name: base-app-frontend
+    container_name: wake-app-frontend
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1/ >/dev/null || exit 1"]
       interval: 10s
@@ -29,14 +29,14 @@ services:
       retries: 5
       start_period: 3s
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
   backend:
     build: ./backend
-    container_name: base-app-backend
+    container_name: wake-app-backend
     environment:
-      - APP_NAME=${APP_NAME:-Base App}
+      - APP_NAME=${APP_NAME:-WAKE App}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
       - REDIS_URL=redis://redis:6379/0
       - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
@@ -50,12 +50,12 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
-    container_name: base-app-keycloak
+    container_name: wake-app-keycloak
     command: start-dev --import-realm
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
@@ -82,12 +82,12 @@ services:
     # so we avoid an in-container healthcheck here. start.sh polls the
     # public /health/ready endpoint externally during boot instead.
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
   keycloak-db:
     image: postgres:16-alpine
-    container_name: base-app-keycloak-db
+    container_name: wake-app-keycloak-db
     environment:
       - POSTGRES_DB=keycloak
       - POSTGRES_USER=keycloak
@@ -100,24 +100,24 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    container_name: base-app-redis
+    container_name: wake-app-redis
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
     networks:
-      - base-app-net
+      - wake-app-net
     restart: unless-stopped
 
 volumes:
   keycloak-db-data:
 
 networks:
-  base-app-net:
+  wake-app-net:
     driver: bridge

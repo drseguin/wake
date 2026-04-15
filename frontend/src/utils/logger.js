@@ -1,5 +1,5 @@
 /**
- * Unified Logger for Base App Frontend
+ * Unified Logger for WAKE App Frontend
  *
  * @fileoverview Provides a level-aware logger with the DSC: prefix for all
  * frontend logging. All modules must use this logger instead of raw

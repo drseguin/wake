@@ -36,7 +36,7 @@ fi
 
 # Export every KEY=VALUE line so docker compose sees them.
 # Parse manually instead of `source` so unquoted values containing spaces
-# (e.g. `APP_NAME=Base App`) work without surprising bash.
+# (e.g. `APP_NAME=WAKE App`) work without surprising bash.
 if [[ -f "$ENV_FILE" ]]; then
   while IFS= read -r line || [[ -n "$line" ]]; do
     # skip blank lines and comments
@@ -60,7 +60,7 @@ if [[ -f "$ENV_FILE" ]]; then
   done < "$ENV_FILE"
 fi
 
-APP_NAME="${APP_NAME:-Base App}"
+APP_NAME="${APP_NAME:-WAKE App}"
 APP_HOST="${APP_HOST:-localhost}"
 export APP_NAME APP_HOST
 
@@ -116,10 +116,10 @@ wait_for_health() {
   local svc="$1" elapsed=0
   while (( elapsed < HEALTH_TIMEOUT )); do
     local state
-    state=$(docker inspect -f '{{.State.Health.Status}}' "base-app-${svc}" 2>/dev/null || echo "missing")
+    state=$(docker inspect -f '{{.State.Health.Status}}' "wake-app-${svc}" 2>/dev/null || echo "missing")
     case "$state" in
       healthy)   echo "   ✓ ${svc}"; return 0 ;;
-      unhealthy) echo "   ✗ ${svc} unhealthy — check: docker logs base-app-${svc}"; return 1 ;;
+      unhealthy) echo "   ✗ ${svc} unhealthy — check: docker logs wake-app-${svc}"; return 1 ;;
       missing)   echo "   ✗ ${svc} container not found"; return 1 ;;
     esac
     sleep 2; elapsed=$((elapsed + 2))

@@ -1,5 +1,5 @@
 /**
- * Base App - Root Application Component
+ * WAKE App - Root Application Component
  *
  * @fileoverview Main application shell managing the header, left panel,
  * and main content area. Handles authentication state, panel open/close,
@@ -64,7 +64,7 @@ export const useDialog = () => useContext(DialogContext);
 
 function App() {
   const [user, setUser] = useState(null);
-  const [appName, setAppName] = useState('Base App');
+  const [appName, setAppName] = useState('WAKE App');
   const [adminRole, setAdminRole] = useState(null);
   const [singleUserMode, setSingleUserMode] = useState(true);
   const [version, setVersion] = useState(null);

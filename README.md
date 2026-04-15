@@ -1,8 +1,8 @@
-# Base App
+# WAKE App
 
-A skeleton/template application that serves as the foundation for all future applications. Base App provides a complete, polished UI shell with theming, authentication, and infrastructure so that every app built from it shares the same visual language and behavior patterns.
+A skeleton/template application that serves as the foundation for all future applications. WAKE App provides a complete, polished UI shell with theming, authentication, and infrastructure so that every app built from it shares the same visual language and behavior patterns.
 
-**Base App has no app-specific functionality.** It is purely a starting point. Clone it, rename it, and build your application on top of it.
+**WAKE App has no app-specific functionality.** It is purely a starting point. Clone it, rename it, and build your application on top of it.
 
 ---
 
@@ -125,7 +125,7 @@ When Keycloak is enabled, you must accept the self-signed certificate on **both*
 See [documentation/KEYCLOAK_SSO.md](documentation/KEYCLOAK_SSO.md) for complete Keycloak administration instructions including:
 
 - Creating and managing users
-- Assigning roles (base-app-user, base-app-admin)
+- Assigning roles (wake-app-user, wake-app-admin)
 - Authentication flow details
 - Troubleshooting
 
@@ -150,10 +150,10 @@ All Keycloak and authentication settings are in `backend/keycloak.json`. Update 
   "server_url": "http://keycloak:8080",
   "public_url": "https://localhost:8443",
   "app_url": "https://localhost",
-  "realm": "base-app",
-  "client_id": "base-app-client",
-  "client_secret": "base-app-secret",
-  "admin_role": "base-app-admin"
+  "realm": "wake-app",
+  "client_id": "wake-app-client",
+  "client_secret": "wake-app-secret",
+  "admin_role": "wake-app-admin"
 }
 ```
 
@@ -192,7 +192,7 @@ All Keycloak and authentication settings are in `backend/keycloak.json`. Update 
 ## Project Structure
 
 ```
-base-app/
+wake-app/
 ├── docker-compose.yml          # Container orchestration
 ├── start.sh / stop.sh          # Build and run scripts
 ├── .env.example                # Environment variable template

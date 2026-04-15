@@ -1,10 +1,10 @@
 {
-  "id": "base-app",
-  "realm": "base-app",
+  "id": "wake-app",
+  "realm": "wake-app",
   "enabled": true,
-  "displayName": "Base App",
-  "displayNameHtml": "<strong>Base App</strong>",
-  "loginTheme": "base-app",
+  "displayName": "WAKE App",
+  "displayNameHtml": "<strong>WAKE App</strong>",
+  "loginTheme": "wake-app",
   "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -15,25 +15,25 @@
   "roles": {
     "realm": [
       {
-        "name": "base-app-user",
+        "name": "wake-app-user",
         "description": "Default role for all application users",
         "composite": false
       },
       {
-        "name": "base-app-admin",
+        "name": "wake-app-admin",
         "description": "Administrator role with full access to admin features",
         "composite": false
       }
     ]
   },
-  "defaultRoles": ["base-app-user"],
+  "defaultRoles": ["wake-app-user"],
   "clients": [
     {
-      "clientId": "base-app-client",
-      "name": "Base App Client",
+      "clientId": "wake-app-client",
+      "name": "WAKE App Client",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "base-app-secret",
+      "secret": "13bbada741dfe999c63cfc8bf7b4f4ebae5ed4c51c7083288a52391561cfef4a",
       "redirectUris": [
         "https://localhost/api/v1/auth/callback",
         "https://localhost/*"
@@ -83,7 +83,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["base-app-user", "base-app-admin"]
+      "realmRoles": ["wake-app-user", "wake-app-admin"]
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Application Style Guide
 
-This document is a complete design specification for building new applications that match the look and feel of the Base App. Any new app built from this guide will share the same visual language, interaction patterns, and component behaviour.
+This document is a complete design specification for building new applications that match the look and feel of the WAKE App. Any new app built from this guide will share the same visual language, interaction patterns, and component behaviour.
 
 ---
 
