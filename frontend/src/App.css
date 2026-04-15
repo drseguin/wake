@@ -1540,6 +1540,10 @@ body {
   margin: -2rem;
   height: calc(100vh - 73px);
   position: relative;
+  /* Create a stacking context so Leaflet's internal z-indexes (panes up to
+     700, controls 1000) stay contained here and can't overlay the header
+     or its UserMenu dropdown. */
+  z-index: 0;
 }
 @media (max-width: 640px) {
   .map-page { margin: -1rem; height: calc(100vh - 73px); }
