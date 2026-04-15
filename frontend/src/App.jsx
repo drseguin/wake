@@ -43,6 +43,9 @@ import NotFound from './pages/NotFound';
 import MapPage from './pages/Map';
 import Profile from './pages/Profile';
 import Marinas from './pages/Marinas';
+import Crews from './pages/Crews';
+import CrewDetail from './pages/CrewDetail';
+import Waypoints from './pages/Waypoints';
 import { AuthProvider } from './contexts/AuthContext';
 import api from './services/api';
 import logger from './utils/logger';
@@ -255,6 +258,9 @@ function App() {
           <Routes>
             <Route path="/" element={<MapPage />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/crews" element={<Crews />} />
+            <Route path="/crews/:id" element={<CrewDetail />} />
+            <Route path="/waypoints" element={<Waypoints />} />
             <Route path="/marinas" element={<Marinas />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound onHome={() => navigate('/')} />} />

@@ -137,6 +137,60 @@ const api = {
     body: JSON.stringify(m),
   }),
   deleteMarina: (id) => apiRequest(`/api/v1/marinas/${id}`, { method: 'DELETE' }),
+
+  // ----- Users (typeahead) -----
+  searchUsers: (q) => apiRequest(`/api/v1/users/search?q=${encodeURIComponent(q)}`),
+
+  // ----- Crews -----
+  listCrews: () => apiRequest('/api/v1/crews'),
+  createCrew: (c) => apiRequest('/api/v1/crews', {
+    method: 'POST',
+    body: JSON.stringify(c),
+  }),
+  getCrew: (id) => apiRequest(`/api/v1/crews/${id}`),
+  deleteCrew: (id) => apiRequest(`/api/v1/crews/${id}`, { method: 'DELETE' }),
+  inviteToCrew: (id, username) => apiRequest(`/api/v1/crews/${id}/invitations`, {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  }),
+  removeCrewMember: (id, username) => apiRequest(
+    `/api/v1/crews/${id}/members/${encodeURIComponent(username)}`,
+    { method: 'DELETE' },
+  ),
+
+  // ----- Invitations -----
+  listInvitations: () => apiRequest('/api/v1/invitations'),
+  acceptInvitation: (id) => apiRequest(`/api/v1/invitations/${id}/accept`, { method: 'POST' }),
+  declineInvitation: (id) => apiRequest(`/api/v1/invitations/${id}/decline`, { method: 'POST' }),
+
+  // ----- Crew messages -----
+  listMessages: (crewId, before) => apiRequest(
+    `/api/v1/crews/${crewId}/messages${before ? `?before=${before}` : ''}`
+  ),
+  postMessage: (crewId, body) => apiRequest(`/api/v1/crews/${crewId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ body }),
+  }),
+
+  // ----- Waypoints -----
+  listWaypoints: () => apiRequest('/api/v1/waypoints'),
+  createWaypoint: (w) => apiRequest('/api/v1/waypoints', {
+    method: 'POST',
+    body: JSON.stringify(w),
+  }),
+  updateWaypoint: (id, w) => apiRequest(`/api/v1/waypoints/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(w),
+  }),
+  deleteWaypoint: (id) => apiRequest(`/api/v1/waypoints/${id}`, { method: 'DELETE' }),
+
+  // ----- Live location -----
+  getMyLocation: () => apiRequest('/api/v1/location/me'),
+  putMyLocation: (loc) => apiRequest('/api/v1/location/me', {
+    method: 'PUT',
+    body: JSON.stringify(loc),
+  }),
+  getCrewLocations: () => apiRequest('/api/v1/location/crews'),
 };
 
 export default api;

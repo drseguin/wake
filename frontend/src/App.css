@@ -1617,6 +1617,202 @@ body {
 }
 .map-banner--warn { border-color: var(--accent-warning, #f0ad4e); }
 
+/* Waypoint pins: colored circle with white SVG inside */
+.wake-waypoint-icon { background: transparent !important; border: none !important; }
+.wake-waypoint-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.wake-waypoint-pin svg { transform: rotate(45deg); }
+
+/* Crew boat markers */
+.wake-crew-icon { background: transparent !important; border: none !important; }
+.wake-crew-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.wake-crew-label {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  position: absolute;
+  left: 38px;
+  top: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Map-overlay UI */
+.map-controls {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  display: flex;
+  gap: 0.5rem;
+}
+.map-share-btn {
+  box-shadow: var(--shadow-md);
+}
+.map-hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.map-popup { min-width: 180px; }
+.map-popup strong { font-size: 14px; color: var(--text-primary); }
+.map-popup p { margin: 4px 0; color: var(--text-secondary); font-size: 13px; }
+.map-popup-meta { color: var(--text-secondary); font-size: 12px; margin-top: 4px; }
+.map-popup-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+/* Icon picker (used in WaypointDialog) */
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+.icon-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 2px solid var(--border-color);
+  background: var(--background-card);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.icon-pick:hover { border-color: var(--border-hover); }
+.icon-pick--active { border-color: var(--accent-color); }
+.icon-pick-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.icon-pick-swatch--anchor  { background: #1976d2; }
+.icon-pick-swatch--fuel    { background: #e65100; }
+.icon-pick-swatch--fishing { background: #388e3c; }
+.icon-pick-swatch--hazard  { background: #d32f2f; }
+.icon-pick-swatch--marina  { background: #7b1fa2; }
+.icon-pick-swatch--other   { background: #455a64; }
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-card);
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* Modal size variant (waypoint dialog needs more room than confirm dialog) */
+.modal-content--md { width: min(560px, 92vw); max-width: 92vw; }
+
+/* Crew chat */
+.crew-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 460px;
+}
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-empty {
+  margin: auto;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.chat-msg {
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chat-msg--mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg-author { font-size: 11px; color: var(--text-secondary); padding: 0 8px; }
+.chat-msg-bubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.chat-msg--mine .chat-msg-bubble {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+.chat-msg-time { font-size: 10px; color: var(--text-secondary); padding: 0 8px; }
+
+.chat-composer {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.chat-composer .form-field-input { flex: 1; }
+
+.search-results { margin-top: 0.75rem; }
+
+.badge {
+  display: inline-block;
+  background: var(--accent-color-light, var(--bg-tertiary));
+  color: var(--accent-color);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* ===================================================================
    ACCESSIBILITY: REDUCED MOTION
    =================================================================== */
